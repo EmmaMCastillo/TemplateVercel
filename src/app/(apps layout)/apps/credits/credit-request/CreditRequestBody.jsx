@@ -1,21 +1,16 @@
 
 'use client';
-import { Container } from 'react-bootstrap';
-import CreditList from './CreditList';
 import SimpleBar from 'simplebar-react';
+import CreditList from './CreditList';
 
 const CreditRequestBody = () => {
     return (
-        <div className="creditapp-wrap">
-            <div className="creditapp-content">
-                <div className="creditapp-detail-wrap">
-                    <SimpleBar className="nicescroll-bar">
-                        <Container fluid>
-                            <CreditList />
-                        </Container>
-                    </SimpleBar>
+        <div className="credit-body">
+            <SimpleBar className="nicescroll-bar">
+                <div className="credit-list-view">
+                    <CreditList />
                 </div>
-            </div>
+            </SimpleBar>
         </div>
     );
 };

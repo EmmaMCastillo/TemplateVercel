@@ -1,13 +1,14 @@
+
 'use client';
 import { useState } from 'react';
-import { Button, Col, Form, Row } from 'react-bootstrap';
+import { Button, Col, Form, Row, Container } from 'react-bootstrap';
 import { Edit2, Trash } from 'react-feather';
 import { creditData } from '@/data/credits/credit-data';
 import HkDataTable from '@/components/@hk-data-table';
 
 const CreditList = () => {
     const [searchTerm, setSearchTerm] = useState('');
-
+    
     const columns = [
         {
             Header: 'Crédito #',
@@ -31,7 +32,7 @@ const CreditList = () => {
             Header: 'Estado',
             accessor: 'status',
             Cell: ({ value }) => (
-                <span className={`badge badge-${value === 'Aprobado' ? 'success' : value === 'Pendiente' ? 'warning' : 'danger'}`}>
+                <span className={`badge badge-${value === 'Aprobado' ? 'success' : 'warning'}`}>
                     {value}
                 </span>
             ),
@@ -40,7 +41,7 @@ const CreditList = () => {
             Header: 'Acciones',
             accessor: 'actions',
             Cell: () => (
-                <div className="d-flex align-items-center">
+                <div className="d-flex">
                     <Button variant="flush-dark" className="btn-icon btn-rounded flush-soft-hover">
                         <span className="icon">
                             <span className="feather-icon">
@@ -61,49 +62,47 @@ const CreditList = () => {
     ];
 
     return (
-        <>
-            <div className="creditapp-detail-wrap">
-                <Row className="mb-3">
-                    <Col sm={7} className="mb-3 mb-sm-0">
-                        <div className="credit-toolbar-left">
-                            <Form.Select size="sm" className="d-flex align-items-center w-130p">
-                                <option value={1}>Exportar a CSV</option>
-                                <option value={2}>Exportar a Excel</option>
-                                <option value={3}>Exportar a PDF</option>
-                            </Form.Select>
+        <Container>
+            <Row className="mb-3">
+                <Col sm={7} className="mb-3 mb-sm-0">
+                    <div className="credit-toolbar-left">
+                        <Form.Select size="sm" className="d-flex align-items-center w-130p">
+                            <option value={1}>Exportar a CSV</option>
+                            <option value={2}>Exportar a Excel</option>
+                            <option value={3}>Exportar a PDF</option>
+                        </Form.Select>
+                    </div>
+                </Col>
+                <Col sm={5}>
+                    <div className="credit-toolbar-right d-flex justify-content-end">
+                        <Button variant="primary" className="me-3">Nueva Solicitud</Button>
+                        <div className="dataTables_filter">
+                            <label>
+                                <Form.Control
+                                    size="sm"
+                                    type="search"
+                                    placeholder="Buscar..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </label>
                         </div>
-                    </Col>
-                    <Col sm={5}>
-                        <div className="credit-toolbar-right d-flex justify-content-end">
-                            <Button variant="primary" className="me-3">Nueva Solicitud</Button>
-                            <div className="dataTables_filter">
-                                <label>
-                                    <Form.Control
-                                        size="sm"
-                                        type="search"
-                                        placeholder="Buscar..."
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                    />
-                                </label>
-                            </div>
-                        </div>
-                    </Col>
-                </Row>
+                    </div>
+                </Col>
+            </Row>
 
-                <div className="table-wrap">
-                    <HkDataTable
-                        column={columns}
-                        rowData={Array.isArray(creditData) ? creditData : []}
-                        rowSelection={true}
-                        rowsPerPage={10}
-                        searchQuery={searchTerm}
-                        classes="nowrap w-100 mb-5"
-                        responsive
-                    />
-                </div>
+            <div className="table-wrap">
+                <HkDataTable
+                    column={columns}
+                    rowData={Array.isArray(creditData) ? creditData : []}
+                    rowSelection={true}
+                    rowsPerPage={10}
+                    searchQuery={searchTerm}
+                    classes="nowrap w-100 mb-5"
+                    responsive
+                />
             </div>
-        </>
+        </Container>
     );
 };
 

@@ -1,13 +1,17 @@
 
-export const creditRequestData = {
-    documentTypes: [
-        { id: 1, name: 'Identificación oficial' },
-        { id: 2, name: 'Comprobante de domicilio' },
-        { id: 3, name: 'Comprobante de ingresos' }
-    ],
-    creditTypes: [
-        { id: 1, name: 'Personal', minAmount: 1000, maxAmount: 50000 },
-        { id: 2, name: 'Hipotecario', minAmount: 100000, maxAmount: 5000000 },
-        { id: 3, name: 'Automotriz', minAmount: 50000, maxAmount: 500000 }
-    ]
-};
+export const creditData = [
+    {
+        id: 1,
+        applicant: "Juan Pérez",
+        date: "2024-01-15",
+        amount: 25000,
+        status: "Pendiente"
+    },
+    {
+        id: 2,
+        applicant: "María García",
+        date: "2024-01-14",
+        amount: 15000,
+        status: "Aprobado"
+    }
+];
