@@ -1,5 +1,6 @@
 {
   "/favicon.ico/route": "app/favicon.ico/route.js",
   "/(apps layout)/dashboard/page": "app/(apps layout)/dashboard/page.js",
+  "/(apps layout)/apps/invoices/invoice-list/page": "app/(apps layout)/apps/invoices/invoice-list/page.js",
   "/(apps layout)/apps/credits/credit-request/page": "app/(apps layout)/apps/credits/credit-request/page.js"
 }
