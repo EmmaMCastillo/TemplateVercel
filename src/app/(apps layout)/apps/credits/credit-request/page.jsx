@@ -1,15 +1,25 @@
 
-'use client';
+'use client'
+import { useState } from 'react';
+import classNames from 'classnames';
 import CreditRequestBody from './CreditRequestBody';
-import CreditRequestHeader from './Header';
+import Header from './Header';
 
 const CreditRequestPage = () => {
+    const [showSidebar, setShowSidebar] = useState(true);
+    
     return (
-        <>
-            <CreditRequestHeader />
-            <CreditRequestBody />
-        </>
-    );
-};
+        <div className="hk-pg-body py-0">
+            <div className={classNames("creditapp-wrap", { "creditapp-sidebar-toggle": !showSidebar })}>
+                <div className="creditapp-content">
+                    <div className="creditapp-detail-wrap">
+                        <Header toggleSidebar={() => setShowSidebar(!showSidebar)} show={showSidebar} />
+                        <CreditRequestBody />
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}
 
-export default CreditRequestPage;
+export default CreditRequestPage
