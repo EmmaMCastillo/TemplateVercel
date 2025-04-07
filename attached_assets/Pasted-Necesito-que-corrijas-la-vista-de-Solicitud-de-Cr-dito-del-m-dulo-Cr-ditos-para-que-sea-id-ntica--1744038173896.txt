@@ -1,0 +1,65 @@
+Necesito que corrijas la vista de "Solicitud de Crédito" del módulo Créditos, para que sea idéntica a la estructura y presentación de la vista "Invoice List".
+
+⚠️ Actualmente, la vista de créditos presenta errores de layout:
+
+Elementos se sobreponen.
+
+No respeta el contenedor principal.
+
+El botón "Nueva solicitud" se sale del layout.
+
+No se ajusta correctamente a la columna lateral (íconos de actualizar, configuración, navegación).
+
+✅ Objetivo final: La página de Solicitud de Crédito debe verse, comportarse y estructurarse exactamente como la página Invoice List, pero con los datos y etiquetas relacionados con las solicitudes de crédito.
+
+🔧 Instrucciones específicas:
+1. Homologar la estructura general:
+La vista de solicitud debe estar envuelta dentro del mismo layout que usa /invoices/page.jsx o el archivo principal equivalente.
+
+Asegúrate de que esté respetando el layout compartido (apps layout) que permite renderizar correctamente junto con la sidebar lateral (íconos de navegación y acciones globales).
+
+2. Ajustar los componentes internos:
+Usa los mismos componentes base para:
+
+Header principal (h2 o componente PageTitle si existe).
+
+Botones de acción ("Exportar a CSV", "Nueva solicitud").
+
+Caja de búsqueda (alineada a la derecha como en invoices).
+
+Tabla (Table o componente reutilizable si ya existe).
+
+Íconos de acciones (Editar, Eliminar, etc.).
+
+Paginación inferior, alineada correctamente.
+
+3. Contenedor y alineación:
+Usa Container, Row, y Col o su equivalente CSS utility para estructurar el contenido.
+
+Aplica clases de separación como py-4, mb-3, gap-3, etc., igual que en la vista de facturas.
+
+Asegura que el botón "Nueva solicitud" esté dentro de la misma sección visual (columna) que el botón "Exportar a CSV", alineado a la izquierda como el botón "Create" en invoices.
+
+4. Datos y etiquetas personalizadas:
+Reemplaza todos los textos de "Invoice" por "Crédito" (ej: "Crédito #", "Solicitante", "Estado", "Monto", etc.).
+
+Los datos deben venir de /data/credits/CreditData.js o el archivo actual definido.
+
+5. Respetar estructura del proyecto:
+No modificar ningún layout compartido, next.config.js, vercel.json, ni configuración de despliegue.
+
+No duplicar código innecesariamente. Si un componente ya existe para InvoiceList, intenta reutilizarlo y pasarlo como props si es genérico.
+
+Mantener el patrón de modularidad y props drilling si está implementado.
+
+Documentar el nuevo archivo CreditRequestList.jsx si es un nuevo componente.
+
+✅ Resultado esperado:
+
+Página de "Solicitud de Crédito" funcional, idéntica en diseño y comportamiento a "Invoice List".
+
+Totalmente integrada con la navegación, sidebar y layout global.
+
+Alineación perfecta de botones, tabla, búsqueda y paginación.
+
+Código modular, limpio y mantenible, sin duplicar lógica innecesaria.
