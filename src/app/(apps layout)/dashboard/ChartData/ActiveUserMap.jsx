@@ -1,23 +1,27 @@
 'use client'
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import * as am5 from "@amcharts/amcharts5";
 import * as am5map from "@amcharts/amcharts5/map";
 import am5geodata_worldLow from "@amcharts/amcharts5-geodata/worldLow";
 
-const ActiveUserMap = () => {
-
-
+const ActiveUserMap = ({ chartId = "chartdiv" }) => {
+    const chartRef = useRef(null);
+    const rootRef = useRef(null);
 
     useEffect(() => {
+        // Ensure the DOM element exists
+        if (!chartRef.current || !(chartRef.current instanceof HTMLElement)) {
+            return;
+        }
 
+        // Create root only if it doesn't exist
+        if (!rootRef.current) {
+            rootRef.current = am5.Root.new(chartId);
+        }
 
-        var root = am5.Root.new("chartdiv", am5map.MapChart);
+        const root = rootRef.current;
+
         // Set themes
-        // https://www.amcharts.com/docs/v5/concepts/themes/
-        // root.setThemes([am5themes_Animated.new(root)]);
-
-        // Create the map chart
-        // https://www.amcharts.com/docs/v5/charts/map-chart/
         var chart = root.container.children.push(
             am5map.MapChart.new(root, {
                 panX: "rotateX",
@@ -34,7 +38,6 @@ const ActiveUserMap = () => {
         );
 
         // Create series for background fill
-        // https://www.amcharts.com/docs/v5/charts/map-chart/map-polygon-series/#Background_polygon
         var backgroundSeries = chart.series.push(am5map.MapPolygonSeries.new(root, {}));
         backgroundSeries.mapPolygons.template.setAll({
             fill: am5.color(0xE6E9EB),
@@ -42,20 +45,12 @@ const ActiveUserMap = () => {
             strokeOpacity: 0
         });
 
-        // Add background polygon
-        // https://www.amcharts.com/docs/v5/charts/map-chart/map-polygon-series/#Background_polygon
-        // backgroundSeries.data.push({
-        //     geometry: am5map.getGeoRectangle(90, 180, -90, -180)
-        // });
-
         // Create main polygon series for countries
-        // https://www.amcharts.com/docs/v5/charts/map-chart/map-polygon-series/
         var polygonSeries = chart.series.push(
             am5map.MapPolygonSeries.new(root, {
                 geoJSON: am5geodata_worldLow,
                 exclude: ["AQ"],
-                fill: am5.color(0xE6E9EB), //Map background color
-
+                fill: am5.color(0xE6E9EB),
             })
         );
 
@@ -68,9 +63,7 @@ const ActiveUserMap = () => {
             fill: am5.color(0xCCE5E7)
         });
 
-
         // Create line series for trajectory lines
-        // https://www.amcharts.com/docs/v5/charts/map-chart/map-line-series/
         var lineSeries = chart.series.push(am5map.MapLineSeries.new(root, {}));
         lineSeries.mapLines.template.setAll({
             stroke: am5.color(0xE6E9EB),
@@ -78,7 +71,6 @@ const ActiveUserMap = () => {
         });
 
         // Create point series for markers
-        // https://www.amcharts.com/docs/v5/charts/map-chart/map-point-series/
         var pointSeries = chart.series.push(am5map.MapPointSeries.new(root, {}));
 
         pointSeries.bullets.push(function () {
@@ -99,7 +91,6 @@ const ActiveUserMap = () => {
                     strokeOpacity: 0
                 })
             );
-
 
             var circle2 = container.children.push(
                 am5.Circle.new(root, {
@@ -278,10 +269,16 @@ const ActiveUserMap = () => {
         // Make stuff animate on load
         chart.appear(1000, 100);
 
-        return () => root.dispose();
-    }, []);
+        // Cleanup function
+        return () => {
+            if (root) {
+                root.dispose();
+                rootRef.current = null;
+            }
+        };
+    }, [chartId]); // Add chartId as dependency
 
-    return <div id="chartdiv" style={{ width: "100%", height: "300px" }} />;
+    return <div ref={chartRef} id={chartId} style={{ width: "100%", height: "300px" }} />;
 };
 
 export default ActiveUserMap;

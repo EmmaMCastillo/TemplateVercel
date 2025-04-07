@@ -23,7 +23,7 @@ const ActiveUserCardDuplicate = () => {
             <Card.Body>
                 <Row>
                     <Col md={8} >
-                        <ActiveUserMap />
+                        <ActiveUserMap chartId="chartdiv2" />
                     </Col>
                     <Col md={4}>
                         <div className="media align-items-center mb-3">
