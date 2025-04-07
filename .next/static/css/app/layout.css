@@ -129463,6 +129463,35 @@ Project:	Jampack
     content: "\ea62";
   }
 }
+/* Credit App */
+.creditapp-wrap {
+  display: flex;
+  flex: 1 1;
+  position: relative;
+}
+
+.creditapp-content {
+  display: flex;
+  flex: 1 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.creditapp-detail-wrap {
+  display: flex;
+  flex: 1 1;
+  flex-direction: column;
+}
+
+.credit-body {
+  flex: 1 1;
+  position: relative;
+}
+
+.credit-list-view {
+  padding: 1.5rem;
+}
+
 /*Email UI*/
 .emailapp-wrap {
   position: relative;
