@@ -30,11 +30,6 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(apps layout)/apps/credits/credit-request/page.js"
-    ],
-    "/(apps layout)/apps/invoices/invoice-list/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(apps layout)/apps/invoices/invoice-list/page.js"
     ]
   }
 }
