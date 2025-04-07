@@ -10,7 +10,7 @@ const CreditList = () => {
     return (
         <>
             <Row className="mb-3">
-                <Col xs={7} mb={3}>
+                <Col sm={7} className="mb-3 mb-sm-0">
                     <div className="credit-toolbar-left">
                         <Form.Select size="sm" className="d-flex align-items-center w-130p">
                             <option value={1}>Exportar a CSV</option>
@@ -19,8 +19,8 @@ const CreditList = () => {
                         </Form.Select>
                     </div>
                 </Col>
-                <Col xs={5} mb={3}>
-                    <div className="credit-toolbar-right">
+                <Col sm={5}>
+                    <div className="credit-toolbar-right d-flex justify-content-end">
                         <div className="dataTables_filter">
                             <label>
                                 <Form.Control
@@ -36,17 +36,19 @@ const CreditList = () => {
                 </Col>
             </Row>
 
-            <HkDataTable
-                column={columns}
-                rowData={data}
-                rowSelection={true}
-                rowsPerPage={10}
-                searchQuery={searchTerm}
-                classes="nowrap w-100 mb-5"
-                responsive
-            />
+            <div className="table-wrap">
+                <HkDataTable
+                    column={columns}
+                    rowData={data}
+                    rowSelection={true}
+                    rowsPerPage={10}
+                    searchQuery={searchTerm}
+                    classes="nowrap w-100 mb-5"
+                    responsive
+                />
+            </div>
         </>
     )
 }
 
-export default CreditList;
+export default CreditList
