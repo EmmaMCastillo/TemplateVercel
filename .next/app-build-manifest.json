@@ -16,11 +16,6 @@
       "static/chunks/main-app.js",
       "static/chunks/app/page.js"
     ],
-    "/_not-found/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/_not-found/page.js"
-    ],
     "/(apps layout)/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -40,11 +35,6 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(apps layout)/apps/credits/credit-request/page.js"
-    ],
-    "/(apps layout)/apps/invoices/invoice-list/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(apps layout)/apps/invoices/invoice-list/page.js"
     ]
   }
 }
