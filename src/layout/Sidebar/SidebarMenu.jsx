@@ -212,6 +212,18 @@ export const SidebarMenu = [
                 ]
             },
             {
+                name: 'Créditos',
+                icon: <Icons.CreditCard />,
+                path: '/apps/credits/',
+                childrens: [
+                    {
+                        name: 'Solicitud de crédito',
+                        path: '/apps/credits/credit-request',
+                        grp_name: "apps",
+                    }
+                ]
+            },
+            {
                 id: "dash_integ",
                 name: 'Integrations',
                 icon: <Icons.Code />,
