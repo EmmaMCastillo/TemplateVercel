@@ -4,6 +4,7 @@ import DateRangePicker from 'react-bootstrap-daterangepicker';
 import moment from 'moment';
 import { Calendar } from 'react-feather';
 import ActiveUserCard from './ActiveUserCard';
+import ActiveUserCardDuplicate from './ActiveUserCardDuplicate';
 import AudienceReviewCard from './AudienceReviewCard';
 import ReturningCustomersCard from './ReturningCustomersCard';
 import CustomerTable from './CustomerTable';
@@ -80,9 +81,16 @@ const Dashboard = () => {
                                         <ReturningCustomersCard />
                                     </Col>
                                 </Row>
+                                {/* Primary Active Users Visualization */}
                                 <Row>
                                     <Col md={12} className="mb-md-4 mb-3">
                                         <ActiveUserCard />
+                                    </Col>
+                                </Row>
+                                {/* Secondary Active Users Visualization - Alternative View */}
+                                <Row>
+                                    <Col md={12} className="mb-md-4 mb-3">
+                                        <ActiveUserCardDuplicate />
                                     </Col>
                                 </Row>
                                 <Row>
