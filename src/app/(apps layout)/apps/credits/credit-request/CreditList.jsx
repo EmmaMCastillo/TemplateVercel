@@ -1,4 +1,3 @@
-
 'use client';
 import { useState } from 'react';
 import { Button, Col, Form, Row } from 'react-bootstrap';
@@ -95,7 +94,7 @@ const CreditList = () => {
                 <div className="table-wrap">
                     <HkDataTable
                         column={columns}
-                        rowData={creditData}
+                        rowData={Array.isArray(creditData) ? creditData : []}
                         rowSelection={true}
                         rowsPerPage={10}
                         searchQuery={searchTerm}
