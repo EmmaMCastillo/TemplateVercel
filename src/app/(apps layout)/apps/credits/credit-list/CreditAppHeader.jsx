@@ -3,8 +3,7 @@ import { Button, Dropdown } from 'react-bootstrap';
 import { Archive, ChevronDown, ChevronUp, Edit, ExternalLink, MoreVertical, RefreshCw, Settings, Slash, Star, Trash2, Users } from 'react-feather';
 import HkTooltip from '@/components/@hk-tooltip/HkTooltip';
 import { useGlobalStateContext } from '@/context/GolobalStateProvider';
-import { useRouter } from 'next/navigation';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation'; // Keep only one import
 
 const CreditAppHeader = ({ toggleSidebar, show }) => {
     const { states, dispatch } = useGlobalStateContext();
