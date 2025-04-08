@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 import { Button, Dropdown } from 'react-bootstrap';
-import { Archive, ChevronDown, ChevronUp, Edit, ExternalLink, MoreVertical, RefreshCw, Settings, Slash, Star, Trash2, Users } from 'react-feather';
+import { ChevronDown, ChevronUp, MoreVertical, RefreshCw, Settings } from 'react-feather';
 import HkTooltip from '@/components/@hk-tooltip/HkTooltip';
 import { useGlobalStateContext } from '@/context/GolobalStateProvider';
 import { useRouter } from 'next/navigation'; // Keep only one import
@@ -16,37 +16,13 @@ const CreditAppHeader = ({ toggleSidebar, show }) => {
                     <Dropdown.Toggle as="a" href="#" className="invoiceapp-title link-dark">
                         <h1>Listado de Créditos en Curso</h1>
                     </Dropdown.Toggle>
-                    <Dropdown.Menu>
-                        <Dropdown.Item>
-                            <span className="feather-icon dropdown-icon">
-                                <Users />
-                            </span>
-                            <span>Todos los Créditos</span>
-                        </Dropdown.Item>
-                        <Dropdown.Item>
-                            <span className="feather-icon dropdown-icon">
-                                <Star />
-                            </span>
-                            <span>Enviados</span>
-                        </Dropdown.Item>
-                        <Dropdown.Item>
-                            <span className="feather-icon dropdown-icon">
-                                <Archive />
-                            </span>
-                            <span>Archivados</span>
-                        </Dropdown.Item>
-                        <Dropdown.Item>
-                            <span className="feather-icon dropdown-icon">
-                                <Edit />
-                            </span>
-                            <span>Pendientes</span>
-                        </Dropdown.Item>
-                        <Dropdown.Item>
-                            <span className="feather-icon dropdown-icon">
-                                <Trash2 />
-                            </span>
-                            <span>Eliminados</span>
-                        </Dropdown.Item>
+                    <Dropdown.Menu align="end">
+                        <Dropdown.Item>Administrar Contacto</Dropdown.Item>
+                        <Dropdown.Item>Importar</Dropdown.Item>
+                        <Dropdown.Item>Exportar</Dropdown.Item>
+                        <div className="dropdown-divider" />
+                        <Dropdown.Item>Enviar Mensajes</Dropdown.Item>
+                        <Dropdown.Item>Delegar Acceso</Dropdown.Item>
                     </Dropdown.Menu>
                 </Dropdown>
             </div>
@@ -87,31 +63,6 @@ const CreditAppHeader = ({ toggleSidebar, show }) => {
                         </span>
                     </Dropdown.Toggle>
                     <Dropdown.Menu align="end">
-                        <Dropdown.Item>
-                            <span className="feather-icon dropdown-icon">
-                                <Star />
-                            </span>
-                            <span>Créditos Destacados</span>
-                        </Dropdown.Item>
-                        <Dropdown.Item>
-                            <span className="feather-icon dropdown-icon">
-                                <Archive />
-                            </span>
-                            <span>Archivar Créditos</span>
-                        </Dropdown.Item>
-                        <div className="dropdown-divider" />
-                        <Dropdown.Item>
-                            <span className="feather-icon dropdown-icon">
-                                <Slash />
-                            </span>
-                            <span>Bloquear Contenido</span>
-                        </Dropdown.Item>
-                        <Dropdown.Item>
-                            <span className="feather-icon dropdown-icon">
-                                <ExternalLink />
-                            </span>
-                            <span>Feedback</span>
-                        </Dropdown.Item>
                     </Dropdown.Menu>
                 </Dropdown>
                 <Button as="a" variant="flush-dark" className="btn-icon btn-rounded flush-soft-hover hk-navbar-togglable d-sm-inline-block d-none" onClick={() => dispatch({ type: "top_nav_toggle" })} >
