@@ -236,6 +236,12 @@ export const SidebarMenu = [
             },
         ]
     },
+    {
+        group: 'Créditos',
+        contents: [
+            { name: 'Créditos en Curso', path: '/apps/credits/credit-list' }
+        ]
+    },
 
     //Pages group
     {
