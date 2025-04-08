@@ -1,11 +1,11 @@
 export const creditColumns = [
-  { header: 'ID', accessor: 'creditId' },
-  { header: 'Fecha', accessor: 'fecha' },
-  { header: 'Cliente', accessor: 'nombreSolicitante' },
-  { header: 'Estado', accessor: 'estado' },
-  { header: 'Progreso', accessor: 'actividad' },
-  { header: 'Monto', accessor: 'monto' },
-  { header: 'Acciones', accessor: 'acciones' }
+  { title: 'ID', accessor: 'creditId' },
+  { title: 'Fecha', accessor: 'fecha' },
+  { title: 'Cliente', accessor: 'nombreSolicitante' },
+  { title: 'Estado', accessor: 'estado' },
+  { title: 'Progreso', accessor: 'actividad' },
+  { title: 'Monto', accessor: 'monto' },
+  { title: 'Acciones', accessor: 'acciones' }
 ];
 
 export const creditData = [

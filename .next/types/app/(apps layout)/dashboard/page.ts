@@ -1,4 +1,4 @@
-// File: C:\Users\eamc0\TDX\TemplateVercel\src\app\(apps layout)\dashboard\page.jsx
+// File: C:\Users\Administrator\Desktop\TDX Desarrollos\Podenza\TemplateVercel\src\app\(apps layout)\dashboard\page.jsx
 import * as entry from '../../../../../src/app/(apps layout)/dashboard/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
