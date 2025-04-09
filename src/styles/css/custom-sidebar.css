@@ -1,0 +1,25 @@
+/* Estilos personalizados para el menú lateral */
+
+/* Ajustar el espaciado entre los elementos del menú */
+.hk-menu .menu-content-wrap .menu-group .navbar-nav > .nav-item {
+    margin-bottom: 15px !important; /* Espaciado uniforme entre elementos */
+}
+
+/* Reducir el tamaño de los iconos y mejorar su apariencia */
+.hk-menu .menu-content-wrap .menu-group .navbar-nav .nav-item .nav-link .nav-icon-wrap > *:not(.badge) {
+    font-size: 16px !important; /* Tamaño más pequeño y moderno para los iconos */
+    opacity: 0.85 !important; /* Ligera transparencia para un aspecto más moderno */
+}
+
+/* Ajustar el espaciado interno y alineación de los elementos del menú */
+.hk-menu .menu-content-wrap .menu-group .navbar-nav .nav-item .nav-link {
+    padding: 0.5rem 1rem !important; /* Padding uniforme */
+    display: flex !important;
+    align-items: center !important;
+    height: 40px !important; /* Altura fija para todos los elementos */
+}
+
+/* Eliminar el espacio adicional entre grupos */
+.hk-menu .menu-content-wrap .menu-gap {
+    height: 0 !important; /* Eliminar el espacio entre grupos */
+}

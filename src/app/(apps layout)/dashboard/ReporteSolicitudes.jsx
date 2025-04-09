@@ -1,5 +1,5 @@
 import React from 'react';
-import { Row, Col, Card, Button } from 'react-bootstrap';
+import { Row, Col, Card, Button, ButtonGroup } from 'react-bootstrap';
 import HkBadge from '@/components/@hk-badge/@hk-badge';
 import HkProgressBar from '@/components/@hk-progressbar/@hk-progressbar';
 
@@ -81,10 +81,20 @@ const ReporteSolicitudes = () => {
             <Col md={12} className="mb-md-4 mb-3">
                 <Card className="card-border mb-0 h-100">
                     <Card.Header className="card-header-action">
-                        <h6>Comparativa por Estado</h6>
+                        <h6>Solicitudes por Estado</h6>
+                        <div className="card-action-wrap">
+                            <ButtonGroup size="sm">
+                                <Button variant="outline-light" className="active">Diario</Button>
+                                <Button variant="outline-light">Semanal</Button>
+                                <Button variant="outline-light">Mensual</Button>
+                            </ButtonGroup>
+                        </div>
                     </Card.Header>
                     <Card.Body>
-                        {/* Gráfico comparativo aquí */}
+                        {/* Gráfico de barras */}
+                        <div style={{ height: "300px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <p className="text-muted">Gráfico de Solicitudes por Estado</p>
+                        </div>
                     </Card.Body>
                 </Card>
             </Col>

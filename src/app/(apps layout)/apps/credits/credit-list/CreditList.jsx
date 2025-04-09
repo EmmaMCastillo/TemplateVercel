@@ -1,9 +1,53 @@
 import { useState } from 'react';
-import { Button } from 'react-bootstrap';
-import { Col, Form, Row } from 'react-bootstrap';
+import { Dropdown, Button, ButtonGroup, Col, Form, Row } from 'react-bootstrap';
 import HkDataTable from '@/components/@hk-data-table'
 import { creditColumns as columns, creditData as data } from '@/data/credits/credit-table';
 import { useRouter } from 'next/navigation';
+import { Archive, Edit, Trash2 } from 'react-feather';
+
+//Custom Action Container
+const actionFormatter = (cell, components) => {
+    return (
+        <div className="d-flex align-items-center">
+            <components.Dropdown as={ButtonGroup} className="btn-group selectable-split-dropdown">
+                <Button variant="outline-light" type="button" className="btn-dyn-text w-100p">Edit</Button>
+                <Dropdown.Toggle variant="outline-light" split className="me-3">
+                    <span className="sr-only">Toggle Dropdown</span>
+                </Dropdown.Toggle>
+                <Dropdown.Menu align="end">
+                    <Dropdown.Item eventKey="Remind" >Remind</Dropdown.Item>
+                    <Dropdown.Item eventKey="Sent" >Sent</Dropdown.Item>
+                    <Dropdown.Item eventKey="Active" >Active</Dropdown.Item>
+                    <Dropdown.Divider as="div" />
+                    <Dropdown.Item eventKey="Edit" >Edit</Dropdown.Item>
+                </Dropdown.Menu>
+            </components.Dropdown>
+            <div className="d-flex">
+                <Button variant="flush-dark" className="btn-icon btn-rounded flush-soft-hover">
+                    <span className="btn-icon-wrap">
+                        <span className="feather-icon">
+                            <Archive />
+                        </span>
+                    </span>
+                </Button>
+                <Button variant="flush-dark" className="btn-icon btn-rounded flush-soft-hover" href={cell?.actionsLink || '#'} >
+                    <span className="btn-icon-wrap">
+                        <span className="feather-icon">
+                            <Edit />
+                        </span>
+                    </span>
+                </Button>
+                <Button variant="flush-dark" className="btn-icon btn-rounded flush-soft-hover">
+                    <span className="btn-icon-wrap">
+                        <span className="feather-icon">
+                            <Trash2 />
+                        </span>
+                    </span>
+                </Button>
+            </div>
+        </div>
+    )
+}
 
 const CreditList = () => {
     const router = useRouter();
@@ -52,7 +96,8 @@ const CreditList = () => {
             </Row>
 
             <HkDataTable
-                column={columns}
+                column={columns.map(col => col.accessor === 'acciones' ? { ...col, cellFormatter: actionFormatter } : col)}
+                components={{ Dropdown }} // Add this line to pass the Dropdown component
                 rowData={data}
                 rowSelection={true}
                 rowsPerPage={10}
