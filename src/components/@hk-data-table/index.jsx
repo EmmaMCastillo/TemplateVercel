@@ -33,6 +33,7 @@ const HkDataTable = ({
     searchQuery,
     exports,
     searchClasses,
+    components,
     markStarred,
     ...rest
 }) => {
@@ -206,8 +207,8 @@ const HkDataTable = ({
                                 >
                                     {
                                         cols.cellFormatter
-                                            ?
-                                            cols.cellFormatter(row[cols.accessor])
+                                           ?
+                                           cols.cellFormatter(row[cols.accessor], components)
                                             :
                                             row[cols.accessor]
                                     }

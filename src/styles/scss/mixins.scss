@@ -1,9 +1,10 @@
 /*__________________________________________________________________;
-[Mixin]
+/[Mixin]
 Project:	Jampack
-___________________________________________________________________*/;
+____________________________________________________________________*/;
 // Colors
 @function to-rgb($value) {
+   // Temporary solution until the project can be updated
    @return red($value), green($value), blue($value);
 }
 @mixin background-opacity($color, $opacity: 0.6) {
@@ -95,23 +96,22 @@ ___________________________________________________________________*/;
 }
 
 @mixin font-size($size) {
-  font-size: $size;
-  font-size: calculateRem($size);
+   font-size: $size;
+   font-size: calculateRem($size);
 }
 
 @mixin bg-linear-gradient($direction, $color-stops...) {
-  background: nth(nth($color-stops, 1), 1);
-  background: linear-gradient($direction, $color-stops)!important;
+   background: nth(nth($color-stops, 1), 1);
+   background: linear-gradient($direction, $color-stops)!important;
 }
 @mixin bdr-linear-gradient($direction, $color-stops...) {
-  border-color: nth(nth($color-stops, 1), 1);
-  border-color: linear-gradient($direction, $color-stops)!important;
+   border-color: nth(nth($color-stops, 1), 1);
+   border-color: linear-gradient($direction, $color-stops)!important;
 }
 
 /*Table Variants*/
 @mixin table-variant($state, $background) {
    @if $state == 'dark' {
-
       .table-#{$state} {
          $color: $white;
          $hover-bg: $black_1;
@@ -119,7 +119,7 @@ ___________________________________________________________________*/;
          $active-bg: mix($color, $background, percentage(.1));
          $table-bg: $background;
          $border-color: $black_1;
-     
+
          --bs-table-bg: #{$table-bg};
          --bs-table-striped-bg: #{$striped-bg};
          --bs-table-striped-color: #{color-contrast($striped-bg)};
@@ -127,14 +127,12 @@ ___________________________________________________________________*/;
          --bs-table-active-color: #{color-contrast($active-bg)};
          --bs-table-hover-bg: #{$hover-bg};
          --bs-table-hover-color: #{color-contrast($hover-bg)};
-     
+
          color: $color;
          border-color: $border-color;
-       }
-  
-     } 
-     @else if $state == 'light' {
-
+      }
+   } 
+   @else if $state == 'light' {
       .table-#{$state} {
          $color: $gray_dark_3;
          $hover-bg: $gray_light_3;
@@ -142,7 +140,7 @@ ___________________________________________________________________*/;
          $active-bg: mix($color, $background, percentage(.1));
          $table-bg: $gray_light_5;
          $border-color: $gray_light_3;
-     
+
          --bs-table-bg: #{$table-bg};
          --bs-table-striped-bg: #{$striped-bg};
          --bs-table-striped-color: #{color-contrast($striped-bg)};
@@ -150,12 +148,11 @@ ___________________________________________________________________*/;
          --bs-table-active-color: #{color-contrast($active-bg)};
          --bs-table-hover-bg: #{$hover-bg};
          --bs-table-hover-color: #{color-contrast($hover-bg)};
-     
+
          color: $color;
          border-color: $border-color;
       }
-  
-     } @else {
+   } @else {
       .table-#{$state} {
          $color: $background;
          $hover-bg: mix(white, $background, 80%);
@@ -163,7 +160,7 @@ ___________________________________________________________________*/;
          $active-bg: mix(white, $background, 85%);
          $table-bg: mix(white, $background, 90%);
          $border-color: mix(white, $background, 50%);
-     
+
          --bs-table-bg: #{$table-bg};
          --bs-table-striped-bg: #{$striped-bg};
          --bs-table-striped-color: #{color-contrast($striped-bg)};
@@ -171,11 +168,11 @@ ___________________________________________________________________*/;
          --bs-table-active-color: #{color-contrast($active-bg)};
          --bs-table-hover-bg: #{$hover-bg};
          --bs-table-hover-color: #{color-contrast($hover-bg)};
-     
+
          color: $color;
          border-color: $border-color;
-       }
-     }
+      }
+   }
 }
 
 @mixin transform($transforms...) {
@@ -184,10 +181,10 @@ ___________________________________________________________________*/;
 
    // print out the transforms 
    -webkit-transform: $transform-list;
-      -moz-transform: $transform-list;
-       -ms-transform: $transform-list;
-        -o-transform: $transform-list;
-           transform: $transform-list;
+   -moz-transform: $transform-list;
+   -ms-transform: $transform-list;
+   -o-transform: $transform-list;
+   transform: $transform-list;
 }
 
 @mixin transition($transition...) {

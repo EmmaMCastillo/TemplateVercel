@@ -16,13 +16,7 @@ export const creditData = [
     estado: 'Pendiente',
     actividad: 'Enviado',
     monto: '$25,000.00 USD',
-    acciones: (
-      <>
-        <a href="#" className="invoice-action-icon"><i className="feather-icon"><Edit /></i></a>
-        <a href="#" className="invoice-action-icon"><i className="feather-icon"><ExternalLink /></i></a>
-        <a href="#" className="invoice-action-icon"><i className="feather-icon"><Trash2 /></i></a>
-      </>
-    )
+    actionsLink: "#"
   },
   {
     creditId: 'CR002',
@@ -31,14 +25,6 @@ export const creditData = [
     estado: 'Aprobado',
     actividad: 'Completado',
     monto: '$15,000.00 USD',
-    acciones: (
-      <>
-        <a href="#" className="invoice-action-icon"><i className="feather-icon"><Edit /></i></a>
-        <a href="#" className="invoice-action-icon"><i className="feather-icon"><ExternalLink /></i></a>
-        <a href="#" className="invoice-action-icon"><i className="feather-icon"><Trash2 /></i></a>
-      </>
-    )
+    actionsLink: "#"
   }
 ];
-
-import { Edit, ExternalLink, Trash2 } from 'react-feather';

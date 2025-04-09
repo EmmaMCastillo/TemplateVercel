@@ -3,6 +3,7 @@ import { GlobalStateProvider } from '@/context/GolobalStateProvider';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-perfect-scrollbar/dist/css/styles.css';
 import '@/styles/scss/style.scss';
+import '@/styles/css/custom-sidebar.css'; // Estilos personalizados para el menú lateral
 
 // Font Family
 const dm_sans = DM_Sans({

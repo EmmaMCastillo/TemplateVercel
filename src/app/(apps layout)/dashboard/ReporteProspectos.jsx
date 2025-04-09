@@ -10,31 +10,13 @@ const ReporteProspectos = () => {
         <Row>
             <Col xxl={3} lg={4} md={5} className="mb-md-4 mb-3">
                 <Card className="card-border mb-0 h-100">
-                    <Card.Header className="card-header-action">
-                        <h6>Total Prospectos</h6>
-                        <div className="card-action-wrap">
-                            <Dropdown className="inline-block">
-                                <Dropdown.Toggle variant='transparent' className="btn-icon btn-rounded btn-flush-dark flush-soft-hover no-caret">
-                                    <span className="icon">
-                                        <span className="feather-icon">
-                                            <MoreVertical />
-                                        </span>
-                                    </span>
-                                </Dropdown.Toggle>
-                                <Dropdown.Menu align="end">
-                                    <Dropdown.Item href="#/action-1">Exportar</Dropdown.Item>
-                                    <Dropdown.Item href="#/action-2">Imprimir</Dropdown.Item>
-                                </Dropdown.Menu>
-                            </Dropdown>
-                        </div>
-                    </Card.Header>
-                    <Card.Body className="text-center">
-                        <div className="d-inline-block mt-4">
-                            <span className="d-block badge-status lh-1">
-                                <HkBadge bg="primary" className="badge-indicator badge-indicator-nobdr d-inline-block" />
-                                <span className="badge-label d-inline-block">Orgánico</span>
-                            </span>
-                            <span className="d-block text-dark fs-5 fw-medium mb-0">243</span>
+                    <Card.Body>
+                        <h6 className="mb-2">Prospectos Totales</h6>
+                        <h2 className="display-5 fw-medium mb-0">1,248</h2>
+                        <div className="d-flex align-items-center mt-2">
+                            <HkBadge bg="success" size="sm" soft>
+                                <i className="bi bi-arrow-up"></i> 7.2% vs. periodo anterior
+                            </HkBadge>
                         </div>
                     </Card.Body>
                 </Card>
@@ -43,9 +25,58 @@ const ReporteProspectos = () => {
                 <Card className="card-border mb-0 h-100">
                     <Card.Header className="card-header-action">
                         <h6>Prospectos por Canal</h6>
+                        <div className="card-action-wrap">
+                            <ButtonGroup size="sm">
+                                <Button variant="outline-light" className="active">Todos</Button>
+                                <Button variant="outline-light">Orgánico</Button>
+                                <Button variant="outline-light">Referido</Button>
+                                <Button variant="outline-light">Broker</Button>
+                            </ButtonGroup>
+                        </div>
                     </Card.Header>
                     <Card.Body>
                         <AudienceReviewChart />
+                        <div className="separator-full mt-5" />
+                        <div className="flex-grow-1 ms-lg-3">
+                            <Row>
+                                <Col xxl={3} sm={6} className="mb-3">
+                                    <span className="d-block fw-medium fs-7">Total</span>
+                                    <div className="d-flex align-items-center">
+                                        <span className="d-block fs-4 fw-medium text-dark mb-0">1,248</span>
+                                        <HkBadge bg="success" size="sm" soft className="ms-1">
+                                            <i className="bi bi-arrow-up" /> 7.2%
+                                        </HkBadge>
+                                    </div>
+                                </Col>
+                                <Col xxl={3} sm={6} className="mb-3">
+                                    <span className="d-block fw-medium fs-7">Orgánico</span>
+                                    <div className="d-flex align-items-center">
+                                        <span className="d-block fs-4 fw-medium text-dark mb-0">486</span>
+                                        <HkBadge bg="success" size="sm" soft className="ms-1">
+                                            <i className="bi bi-arrow-up" /> 4.3%
+                                        </HkBadge>
+                                    </div>
+                                </Col>
+                                <Col xxl={3} sm={6} className="mb-3">
+                                    <span className="d-block fw-medium fs-7">Referido</span>
+                                    <div className="d-flex align-items-center">
+                                        <span className="d-block fs-4 fw-medium text-dark mb-0">214</span>
+                                        <HkBadge bg="danger" size="sm" soft className="ms-1">
+                                            <i className="bi bi-arrow-down" /> 2.1%
+                                        </HkBadge>
+                                    </div>
+                                </Col>
+                                <Col xxl={3} sm={6}>
+                                    <span className="d-block fw-medium fs-7">Broker</span>
+                                    <div className="d-flex align-items-center">
+                                        <span className="d-block fs-4 fw-medium text-dark mb-0">548</span>
+                                        <HkBadge bg="success" size="sm" soft className="ms-1">
+                                            <i className="bi bi-arrow-up" /> 10.8%
+                                        </HkBadge>
+                                    </div>
+                                </Col>
+                            </Row>
+                        </div>
                     </Card.Body>
                 </Card>
             </Col>
