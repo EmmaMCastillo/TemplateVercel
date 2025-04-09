@@ -1,6 +1,7 @@
 import React from 'react';
 import { Row, Col, Card, Button, ButtonGroup, Form } from 'react-bootstrap';
 import HkDataTable from '@/components/@hk-data-table';
+import { Upload } from 'react-feather';
 
 const ReporteAsesores = () => {
     return (
