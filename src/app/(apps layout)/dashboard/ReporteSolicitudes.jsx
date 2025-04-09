@@ -2,7 +2,6 @@ import React from 'react';
 import { Row, Col, Card, Button } from 'react-bootstrap';
 import HkBadge from '@/components/@hk-badge/@hk-badge';
 import HkProgressBar from '@/components/@hk-progressbar/@hk-progressbar';
-import ReturningCustomersCard from './ReturningCustomersCard'; // Usar el componente existente
 
 const ReporteSolicitudes = () => {
     return (

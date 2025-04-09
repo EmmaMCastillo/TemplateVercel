@@ -3,12 +3,18 @@ import { Col, Container, Form, InputGroup, Nav, Row, Tab } from 'react-bootstrap
 import DateRangePicker from 'react-bootstrap-daterangepicker';
 import moment from 'moment';
 import { Calendar } from 'react-feather';
-import ActiveUserCard from './ActiveUserCard';
-import ActiveUserCardDuplicate from './ActiveUserCardDuplicate';
-import AudienceReviewCard from './AudienceReviewCard';
-import ReturningCustomersCard from './ReturningCustomersCard';
-import CustomerTable from './CustomerTable';
+// Importar componentes antiguos (comentados temporalmente)
+// import ActiveUserCard from './ActiveUserCard';
+// import ActiveUserCardDuplicate from './ActiveUserCardDuplicate';
+// import AudienceReviewCard from './AudienceReviewCard';
+// import ReturningCustomersCard from './ReturningCustomersCard';
+// import CustomerTable from './CustomerTable';
 import ChatBotInterface from '../apps/chat-popup/chat-bot/ChatBotInterface';
+
+// Importar nuevos componentes
+import ReporteProspectos from './ReporteProspectos';
+import ReporteSolicitudes from './ReporteSolicitudes';
+import ReporteAsesores from './ReporteAsesores';
 
 const Dashboard = () => {
 
@@ -16,7 +22,7 @@ const Dashboard = () => {
         <>
             <ChatBotInterface show={false} />
             <Container fluid="xxl" >
-                <Tab.Container activeKey="overview">
+                <Tab.Container activeKey="prospectos">
                     {/* Page Header */}
                     <div className="hk-pg-header pg-header-wth-tab pt-7">
                         <div className="d-flex">
@@ -57,13 +63,18 @@ const Dashboard = () => {
                                 </Nav.Link>
                             </Nav.Item>
                             <Nav.Item>
-                                <Nav.Link eventKey="demo_nav_1">
-                                    <span className="nav-link-text">Analytics</span>
+                                <Nav.Link eventKey="prospectos">
+                                    <span className="nav-link-text">Prospectos</span>
                                 </Nav.Link>
                             </Nav.Item>
                             <Nav.Item>
-                                <Nav.Link eventKey="demo_nav_2">
-                                    <span className="nav-link-text">Operations</span>
+                                <Nav.Link eventKey="solicitudes">
+                                    <span className="nav-link-text">Solicitudes</span>
+                                </Nav.Link>
+                            </Nav.Item>
+                            <Nav.Item>
+                                <Nav.Link eventKey="asesores">
+                                    <span className="nav-link-text">Asesores</span>
                                 </Nav.Link>
                             </Nav.Item>
                         </Nav>
@@ -73,34 +84,46 @@ const Dashboard = () => {
                     <div className="hk-pg-body">
                         <Tab.Content>
                             <Tab.Pane eventKey="overview" >
-                                <Row>
+                                {/* Contenido comentado temporalmente */}
+                                {/* <Row>
                                     <Col xxl={9} lg={8} md={7} className="mb-md-4 mb-3">
                                         <AudienceReviewCard />
                                     </Col>
                                     <Col xxl={3} lg={4} md={5} className="mb-md-4 mb-3">
                                         <ReturningCustomersCard />
                                     </Col>
-                                </Row>
+                                </Row> */}
                                 {/* Primary Active Users Visualization */}
-                                <Row>
+                                {/* <Row>
                                     <Col md={12} className="mb-md-4 mb-3">
                                         <ActiveUserCard />
                                     </Col>
-                                </Row>
+                                </Row> */}
                                 {/* Secondary Active Users Visualization - Alternative View */}
-                                <Row>
+                                {/* <Row>
                                     <Col md={12} className="mb-md-4 mb-3">
                                         <ActiveUserCardDuplicate />
                                     </Col>
-                                </Row>
-                                <Row>
+                                </Row> */}
+                                {/* <Row>
                                     <Col md={12} className="mb-md-4 mb-3">
                                         <CustomerTable />
                                     </Col>
-                                </Row>
+                                </Row> */}
+                                <div className="text-center py-5">
+                                    <h3>Bienvenido al Dashboard</h3>
+                                    <p>Por favor, seleccione una de las pestañas para ver los reportes.</p>
+                                </div>
                             </Tab.Pane>
-                            <Tab.Pane eventKey="demo_nav_1" />
-                            <Tab.Pane eventKey="demo_nav_2" />
+                            <Tab.Pane eventKey="prospectos">
+                                <ReporteProspectos />
+                            </Tab.Pane>
+                            <Tab.Pane eventKey="solicitudes">
+                                <ReporteSolicitudes />
+                            </Tab.Pane>
+                            <Tab.Pane eventKey="asesores">
+                                <ReporteAsesores />
+                            </Tab.Pane>
                         </Tab.Content>
                     </div>
                     {/* /Page Body */}
