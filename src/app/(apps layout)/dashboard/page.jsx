@@ -12,6 +12,7 @@ import { Calendar } from 'react-feather';
 import ChatBotInterface from '../apps/chat-popup/chat-bot/ChatBotInterface';
 // Importar nuevos componentes
 import VistaGeneral from './VistaGeneral';
+import Bancos from './Bancos';
 import ReporteProspectos from './ReporteProspectos';
 import ReporteSolicitudes from './ReporteSolicitudes';
 import TasaConversion from './TasaConversion';
@@ -85,6 +86,9 @@ const Dashboard = () => {
                             <Tab.Pane eventKey="vista_general">
                                 <VistaGeneral />
                             </Tab.Pane>
++                            <Tab.Pane eventKey="bancos">
++                                <Bancos />
++                            </Tab.Pane>
                             <Tab.Pane eventKey="prospectos">
                                 <ReporteProspectos />
                             </Tab.Pane>

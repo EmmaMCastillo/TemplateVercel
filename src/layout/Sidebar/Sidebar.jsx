@@ -23,7 +23,6 @@ const Sidebar = () => {
         setActiveMenu(menuName);
     }
 
-
     return (
         <>
             <div className="hk-menu">
@@ -34,8 +33,8 @@ const Sidebar = () => {
                     <div className="menu-content-wrap">
                         {SidebarMenu.map((routes, index) => (
                             <React.Fragment key={index}>
-                                <div className="menu-group" >
-                                    {routes.group && <div className="nav-header" >
+                                <div className="menu-group">
+                                    {routes.group && <div className="nav-header">
                                         <span>{routes.group}</span>
                                     </div>}
                                     {routes.contents.map((menus, idx) => (
@@ -59,7 +58,6 @@ const Sidebar = () => {
                                                                 {menus.badge && menus.badge}
                                                             </Nav.Link>
 
-                                                            {/* <Collapse in={open}> */}
                                                             <ul id={menus.id} className={classNames("nav flex-column nav-children", { "collapse": activeMenu !== menus.name })}>
                                                                 <li className="nav-item">
                                                                     <ul className="nav flex-column">
@@ -102,7 +100,6 @@ const Sidebar = () => {
                                                                     </ul>
                                                                 </li>
                                                             </ul>
-                                                            {/* </Collapse> */}
 
                                                         </>
                                                         :
@@ -139,16 +136,13 @@ const Sidebar = () => {
                                 <div className="menu-gap" />
                             </React.Fragment>
                         ))}
-                        {/* Widget "Quickly Build Applications" oculto */}
                     </div>
                 </SimpleBar>
                 {/* /Main Menu */}
-            </div >
+            </div>
             <div onClick={() => dispatch({ type: 'sidebar_toggle' })} className="hk-menu-backdrop" />
         </>
     )
 }
-
-
 
 export default Sidebar;

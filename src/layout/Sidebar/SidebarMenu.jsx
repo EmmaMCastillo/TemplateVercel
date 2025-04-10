@@ -7,7 +7,7 @@ export const SidebarMenu = [
         contents: [
             {
                 name: 'Dashboard',
-                icon: <Icons.Dashboard size={18} />,
+                icon: <Icons.Dashboard size={24} />,
                 path: '/dashboard'
             },
             {
@@ -16,10 +16,20 @@ export const SidebarMenu = [
                 path: '/apps/prospectos'
             },
             {
+                name: 'Bancos',
+                icon: <Icons.CreditCard size={18} />,
+                path: '/apps/bancos'
+            },
+            {
                 name: 'Solicitudes',
                 icon: <Icons.FileInvoice size={18} />,
                 path: '/apps/solicitudes'
-            }
+            },
+            {
+                name: 'Usuarios',
+                icon: <Icons.User size={18} />,
+                path: '/apps/usuarios'
+            }, // Coma añadida aquí
         ]
     }
 ]

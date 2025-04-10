@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modal Configurar Permisos</title>
+    <style>
+        :root {
+            --primary-color: #20b2aa;
+            --secondary-color: #34d399;
+            --accent-color: #f59e0b;
+            --background-color: #f9fafb;
+            --card-bg: #ffffff;
+            --text-primary: #374151;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --danger-color: #ef4444;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --info-color: #3b82f6;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        
+        body {
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .modal {
+            position: relative;
+            background-color: var(--card-bg);
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 1000px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .modal-description {
+            padding: 1rem 1.5rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            padding: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            background-color: var(--background-color);
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background-color: #1a9c96;
+        }
+        
+        .btn-secondary {
+            background-color: #6B7280;
+            color: white;
+            border: none;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #4B5563;
+        }
+        
+        /* Controles específicos para permisos */
+        .permissions-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .role-selector {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
+        .role-selector label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .form-select {
+            padding: 0.5rem 2rem 0.5rem 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            outline: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            appearance: none;
+        }
+        
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 1px var(--primary-color);
+        }
+        
+        .permission-legend {
+            display: flex;
+            gap: 1.5rem;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+        
+        .color-no-access {
+            background-color: #e5e7eb;
+        }
+        
+        .color-read {
+            background-color: #93c5fd;
+        }
+        
+        .color-write {
+            background-color: #fcd34d;
+        }
+        
+        .color-admin {
+            background-color: #34d399;
+        }
+        
+        /* Tabla de permisos */
+        .permissions-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+        
+        .permissions-table th,
+        .permissions-table td {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+        }
+        
+        .permissions-table th {
+            background-color: var(--background-color);
+            text-align: left;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        
+        .permissions-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: var(--background-color);
+        }
+        
+        .permissions-table tbody th {
+            font-weight: 500;
+        }
+        
+        .permission-module {
+            font-weight: 600;
+            color: var(--primary-color);
+            background-color: rgba(32, 178, 170, 0.05);
+        }
+        
+        .permission-subitem {
+            padding-left: 1.5rem;
+        }
+        
+        .permission-action {
+            padding-left: 3rem;
+            color: var(--text-secondary);
+        }
+        
+        .permission-select {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .permission-option {
+            width: 16px;
+            height: 16px;
+            border-radius: 2px;
+            cursor: pointer;
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .permission-option:hover {
+            opacity: 0.8;
+        }
+        
+        .permission-option.selected {
+            box-shadow: 0 0 0 2px var(--primary-color);
+        }
+        
+        .tab-container {
+            margin-bottom: 1.5rem;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+        
+        .tab {
+            padding: 0.75rem 1.25rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+        }
+        
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        
+        .tab-panel {
+            display: none;
+        }
+        
+        .tab-panel.active {
+            display: block;
+        }
+        
+        .divider {
+            margin: 1.5rem 0;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="modal">
+        <div class="modal-header">
+            <h2 class="modal-title">Configurar Permisos</h2>
+            <button class="close-btn">
+                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="modal-description">
+            Aquí puedes configurar los permisos para los usuarios.
+        </div>
+        
+        <div class="modal-body">
+            <div class="permissions-controls">
+                <div class="role-selector">
+                    <label for="role-select">Rol:</label>
+                    <select id="role-select" class="form-select">
+                        <option value="admin">Administrador</option>
+                        <option value="ejecutivo">Ejecutivos</option>
+                        <option value="comisionista">Comisionistas</option>
+                        <option value="operaciones">Operaciones</option>
+                        <option value="llamadas">Llamadas</option>
+                        <option value="comercial">Comercial</option>
+                        <option value="coordinador-operaciones">Coordinador de Operaciones</option>
+                        <option value="coordinador-llamadas">Coordinador de Llamadas</option>
+                        <option value="coordinador-comercial">Coordinador Comercial</option>
+                    </select>
+                </div>
+                
+                <div class="permission-legend">
+                    <div class="legend-item">
+                        <div class="legend-color color-no-access"></div>
+                        <span>Sin acceso</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color color-read"></div>
+                        <span>Lectura</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color color-write"></div>
+                        <span>Escritura</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color color-admin"></div>
+                        <span>Administrador</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-container">
+                <div class="tabs">
+                    <div class="tab active">Permisos por Módulo</div>
+                    <div class="tab">Permisos Avanzados</div>
+                </div>
+                
+                <div class="tab-panel active">
+                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                        <table class="permissions-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 30%;">Módulo/Acción</th>
+                                    <th style="width: 17.5%;">Acceso</th>
+                                    <th style="width: 17.5%;">Creación</th>
+                                    <th style="width: 17.5%;">Edición</th>
+                                    <th style="width: 17.5%;">Eliminación</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Dashboard Module -->
+                                <tr class="permission-module">
+                                    <th>Dashboard</th>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read selected"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access selected"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access selected"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access selected"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Prospectos Module -->
+                                <tr class="permission-module">
+                                    <th>Prospectos</th>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin selected"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write selected"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write selected"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin selected"></div>
+                                    </td>
+                                </tr>
+                                <tr class="permission-subitem">
+                                    <th>Listado de Prospectos</th>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read selected"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write selected"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write selected"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write selected"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                </tr>
+                                <tr class="permission-action">
+                                    <th>Exportar Prospectos</th>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read selected"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access selected"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access selected"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access selected"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Solicitudes Module -->
+                                <tr class="permission-module">
+                                    <th>Solicitudes</th>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write selected"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write selected"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write selected"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin selected"></div>
+                                    </td>
+                                </tr>
+                                <tr class="permission-subitem">
+                                    <th>Documentos</th>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read selected"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write selected"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write selected"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write selected"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                </tr>
+                                <tr class="permission-subitem">
+                                    <th>Desembolso</th>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read selected"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write selected"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write selected"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access selected"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                </tr>
+                                <tr class="permission-subitem">
+                                    <th>Matriculación</th>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read selected"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write selected"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write selected"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access selected"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Bancos Module -->
+                                <tr class="permission-module">
+                                    <th>Bancos</th>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read selected"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin selected"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin selected"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin selected"></div>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Usuarios Module -->
+                                <tr class="permission-module">
+                                    <th>Usuarios</th>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin selected"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin selected"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin selected"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin selected"></div>
+                                    </td>
+                                </tr>
+                                <tr class="permission-subitem">
+                                    <th>Gestión de Permisos</th>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin selected"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin selected"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin selected"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin selected"></div>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Créditos en Curso Module -->
+                                <tr class="permission-module">
+                                    <th>Créditos en Curso</th>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-read selected"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access selected"></div>
+                                        <div class="permission-option color-read"></div>
+                                        <div class="permission-option color-write"></div>
+                                        <div class="permission-option color-admin"></div>
+                                    </td>
+                                    <td class="permission-select">
+                                        <div class="permission-option color-no-access"></div>
+                                        <div class="permission-option color-

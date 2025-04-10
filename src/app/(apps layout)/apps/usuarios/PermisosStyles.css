@@ -1,0 +1,152 @@
+/* Estilos para el modal de permisos */
+.permisos-modal .modal-dialog {
+    max-width: 1000px;
+}
+
+.permisos-modal .modal-description {
+    padding: 1rem 1.5rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* Controles específicos para permisos */
+.permissions-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.role-selector {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.role-selector label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+}
+
+.permission-legend {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+.color-no-access {
+    background-color: #e5e7eb;
+}
+
+.color-read {
+    background-color: #93c5fd;
+}
+
+.color-write {
+    background-color: #fcd34d;
+}
+
+.color-admin {
+    background-color: #34d399;
+}
+
+/* Tabla de permisos */
+.permissions-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.permissions-table th,
+.permissions-table td {
+    padding: 0.75rem 1rem;
+    border: 1px solid #e5e7eb;
+}
+
+.permissions-table th {
+    background-color: #f9fafb;
+    text-align: left;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+.permissions-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #f9fafb;
+}
+
+.permissions-table tbody th {
+    font-weight: 500;
+}
+
+.permission-module {
+    font-weight: 600;
+    color: #20b2aa;
+    background-color: rgba(32, 178, 170, 0.05);
+}
+
+.permission-subitem {
+    padding-left: 1.5rem;
+}
+
+.permission-action {
+    padding-left: 3rem;
+    color: #6b7280;
+}
+
+.permission-select {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.permission-option {
+    width: 16px;
+    height: 16px;
+    border-radius: 2px;
+    cursor: pointer;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.permission-option:hover {
+    opacity: 0.8;
+}
+
+.permission-option.selected {
+    box-shadow: 0 0 0 2px #20b2aa;
+}
+
+/* Tabs */
+.nav-tabs .nav-link {
+    color: #6b7280;
+    border-bottom: 2px solid transparent;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.nav-tabs .nav-link.active {
+    color: #20b2aa;
+    border-bottom-color: #20b2aa;
+}
+
+.tab-content {
+    margin-top: 1.5rem;
+}
