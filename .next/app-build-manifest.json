@@ -25,6 +25,16 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(apps layout)/dashboard/page.js"
+    ],
+    "/(apps layout)/apps/prospectos/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(apps layout)/apps/prospectos/page.js"
+    ],
+    "/(apps layout)/apps/solicitudes/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(apps layout)/apps/solicitudes/page.js"
     ]
   }
 }
