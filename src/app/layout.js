@@ -15,7 +15,7 @@ const dm_sans = DM_Sans({
 
 // metadata
 export const metadata = {
-  title: 'Jampack | A Robust SaaS App Template Built on Next.js',
+  title: 'TDXCORE - DEMO',
   description: 'NextJs based admin dashboard template by hencework',
   keywords: ['NextJs', 'React NextJs', 'Next.js', 'React template', 'react admin', 'react node', 'react bootstrap', 'responsive web application', 'react webapp', 'multi app demos'],
 }
