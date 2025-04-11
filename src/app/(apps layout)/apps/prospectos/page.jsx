@@ -1,11 +1,17 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Card, Col, Container, Form, InputGroup, Row, Table } from 'react-bootstrap';
 import { Eye, FileText, Filter, Pencil, Plus, Search } from 'tabler-icons-react';
 import HkBadge from '@/components/@hk-badge/@hk-badge';
 import NuevoProspectoModal from './NuevoProspectoModal';
 import VerProspectoModal from './VerProspectoModal';
 import EditarProspectoModal from './EditarProspectoModal';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
 const ProspectosPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -13,67 +19,57 @@ const ProspectosPage = () => {
     const [showVerModal, setShowVerModal] = useState(false);
     const [showEditarModal, setShowEditarModal] = useState(false);
     const [selectedProspecto, setSelectedProspecto] = useState(null);
+    const [prospectos, setProspectos] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    // Datos de ejemplo para la tabla de prospectos
-    const prospectos = [
-        {
-            id: 1,
-            nombre: 'Juan Pérez Solano',
-            cedula: '1724563218',
-            telefono: '0998765432',
-            email: 'juan.perez@example.com',
-            asesor: 'Carlos Mendoza',
-            fecha: '09/04/2025',
-            estado: 'SUJETO'
-        },
-        {
-            id: 2,
-            nombre: 'María González Flores',
-            cedula: '1756781234',
-            telefono: '0987123456',
-            email: 'maria.gonzalez@example.com',
-            asesor: 'Luis Torres',
-            fecha: '08/04/2025',
-            estado: 'CREADA'
-        },
-        {
-            id: 3,
-            nombre: 'Roberto Morales Jiménez',
-            cedula: '0923456789',
-            telefono: '0991234567',
-            email: 'roberto.morales@example.com',
-            asesor: 'Ana Salazar',
-            fecha: '07/04/2025',
-            estado: 'STAND BY'
-        },
-        {
-            id: 4,
-            nombre: 'Sofía Mendoza Rivera',
-            cedula: '1789012345',
-            telefono: '0995678901',
-            email: 'sofia.mendoza@example.com',
-            asesor: 'Pedro Alvarado',
-            fecha: '06/04/2025',
-            estado: 'NO SUJETO'
-        }
-    ];
+    // Cargar prospectos al iniciar
+    useEffect(() => {
+        const fetchProspectos = async () => {
+            try {
+                setLoading(true);
+                const { data, error } = await supabase
+                    .from('prospectos')
+                    .select('*');
+                
+                if (error) {
+                    console.error('Error al cargar prospectos:', error);
+                    setError(`Error al cargar prospectos: ${error.message || 'Error desconocido'}`);
+                } else {
+                    console.log('Prospectos cargados:', data?.length || 0);
+                    setProspectos(data || []);
+                    setError(null);
+                }
+            } catch (err) {
+                console.error('Error general al cargar prospectos:', err);
+                setError(`Error al cargar prospectos: ${err.message || 'Error desconocido'}`);
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        fetchProspectos();
+    }, []);
 
     // Función para filtrar prospectos según el término de búsqueda
     const filteredProspectos = prospectos.filter(prospecto => 
-        prospecto.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        prospecto.cedula.includes(searchTerm) ||
-        prospecto.telefono.includes(searchTerm) ||
-        prospecto.email.toLowerCase().includes(searchTerm.toLowerCase())
+        prospecto.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        prospecto.cedula?.includes(searchTerm) ||
+        prospecto.telefono?.includes(searchTerm) ||
+        prospecto.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     // Función para obtener la clase de badge según el estado
     const getBadgeClass = (estado) => {
         switch (estado) {
             case 'CREADA':
+            case 'NUEVO':
                 return 'success';
             case 'STAND BY':
+            case 'CONTACTADO':
                 return 'warning';
             case 'SUJETO':
+            case 'INTERESADO':
                 return 'primary';
             case 'NO SUJETO':
                 return 'danger';
@@ -93,7 +89,10 @@ const ProspectosPage = () => {
                         </div>
                     </div>
                     <div className="d-flex justify-content-between align-items-center mb-4">
-                        <div></div>
+                        <div>
+                            {loading && <span className="text-muted">Cargando prospectos...</span>}
+                            {error && <span className="text-danger">{error}</span>}
+                        </div>
                         <div className="d-flex gap-2">
                             <Button variant="outline-secondary">
                                 <span className="d-flex align-items-center">
@@ -148,75 +147,81 @@ const ProspectosPage = () => {
                                             <th>CÉDULA/RUC</th>
                                             <th>TELÉFONO</th>
                                             <th>EMAIL</th>
-                                            <th>ASESOR</th>
-                                            <th>FECHA</th>
                                             <th>ESTADO</th>
                                             <th>ACCIONES</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {filteredProspectos.map((prospecto) => (
-                                            <tr key={prospecto.id}>
-                                                <td>{prospecto.nombre}</td>
-                                                <td>{prospecto.cedula}</td>
-                                                <td>{prospecto.telefono}</td>
-                                                <td>{prospecto.email}</td>
-                                                <td>{prospecto.asesor}</td>
-                                                <td>{prospecto.fecha}</td>
-                                                <td>
-                                                    <HkBadge bg={getBadgeClass(prospecto.estado)} soft>
-                                                        {prospecto.estado}
-                                                    </HkBadge>
-                                                </td>
-                                                <td>
-                                                    <div className="d-flex gap-2">
-                                                        <Button
-                                                            variant="flush-dark"
-                                                            size="sm"
-                                                            className="btn-icon btn-rounded flush-soft-hover"
-                                                            onClick={() => {
-                                                                console.log('Ver prospecto:', prospecto);
-                                                                setSelectedProspecto({...prospecto});
-                                                                setTimeout(() => {
-                                                                    setShowVerModal(true);
-                                                                }, 100);
-                                                            }}
-                                                        >
-                                                            <span className="icon">
-                                                                <span className="feather-icon">
-                                                                    <Eye size={18} />
-                                                                </span>
-                                                            </span>
-                                                        </Button>
-                                                        <Button
-                                                            variant="flush-dark"
-                                                            size="sm"
-                                                            className="btn-icon btn-rounded flush-soft-hover"
-                                                            onClick={() => {
-                                                                console.log('Editar prospecto:', prospecto);
-                                                                setSelectedProspecto({...prospecto});
-                                                                setTimeout(() => {
-                                                                    setShowEditarModal(true);
-                                                                }, 100);
-                                                            }}
-                                                        >
-                                                            <span className="icon">
-                                                                <span className="feather-icon">
-                                                                    <Pencil size={18} />
-                                                                </span>
-                                                            </span>
-                                                        </Button>
-                                                        <Button variant="flush-dark" size="sm" className="btn-icon btn-rounded flush-soft-hover">
-                                                            <span className="icon">
-                                                                <span className="feather-icon">
-                                                                    <FileText size={18} />
-                                                                </span>
-                                                            </span>
-                                                        </Button>
-                                                    </div>
-                                                </td>
+                                        {loading ? (
+                                            <tr>
+                                                <td colSpan="6" className="text-center">Cargando prospectos...</td>
                                             </tr>
-                                        ))}
+                                        ) : filteredProspectos.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="6" className="text-center">No se encontraron prospectos</td>
+                                            </tr>
+                                        ) : (
+                                            filteredProspectos.map((prospecto) => (
+                                                <tr key={prospecto.id}>
+                                                    <td>{prospecto.nombre}</td>
+                                                    <td>{prospecto.cedula}</td>
+                                                    <td>{prospecto.telefono}</td>
+                                                    <td>{prospecto.email}</td>
+                                                    <td>
+                                                        <HkBadge bg={getBadgeClass(prospecto.estado)} soft>
+                                                            {prospecto.estado}
+                                                        </HkBadge>
+                                                    </td>
+                                                    <td>
+                                                        <div className="d-flex gap-2">
+                                                            <Button
+                                                                variant="flush-dark"
+                                                                size="sm"
+                                                                className="btn-icon btn-rounded flush-soft-hover"
+                                                                onClick={() => {
+                                                                    console.log('Ver prospecto:', prospecto);
+                                                                    setSelectedProspecto({...prospecto});
+                                                                    setTimeout(() => {
+                                                                        setShowVerModal(true);
+                                                                    }, 100);
+                                                                }}
+                                                            >
+                                                                <span className="icon">
+                                                                    <span className="feather-icon">
+                                                                        <Eye size={18} />
+                                                                    </span>
+                                                                </span>
+                                                            </Button>
+                                                            <Button
+                                                                variant="flush-dark"
+                                                                size="sm"
+                                                                className="btn-icon btn-rounded flush-soft-hover"
+                                                                onClick={() => {
+                                                                    console.log('Editar prospecto:', prospecto);
+                                                                    setSelectedProspecto({...prospecto});
+                                                                    setTimeout(() => {
+                                                                        setShowEditarModal(true);
+                                                                    }, 100);
+                                                                }}
+                                                            >
+                                                                <span className="icon">
+                                                                    <span className="feather-icon">
+                                                                        <Pencil size={18} />
+                                                                    </span>
+                                                                </span>
+                                                            </Button>
+                                                            <Button variant="flush-dark" size="sm" className="btn-icon btn-rounded flush-soft-hover">
+                                                                <span className="icon">
+                                                                    <span className="feather-icon">
+                                                                        <FileText size={18} />
+                                                                    </span>
+                                                                </span>
+                                                            </Button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
                                     </tbody>
                                 </Table>
                             </div>
@@ -230,6 +235,38 @@ const ProspectosPage = () => {
         <NuevoProspectoModal
             show={showNuevoModal}
             onHide={() => setShowNuevoModal(false)}
+            onProspectoCreated={(nuevoProspecto) => {
+                // Recargar prospectos después de crear uno nuevo
+                console.log('Prospecto creado, recargando lista...');
+                setLoading(true);
+                
+                try {
+                    // Primero intentamos con created_at
+                    supabase
+                        .from('prospectos')
+                        .select('*')
+                        .then(({ data, error }) => {
+                            if (error) {
+                                console.error('Error al recargar prospectos:', error);
+                                setError(`Error al actualizar la lista de prospectos: ${error.message || 'Error desconocido'}`);
+                            } else {
+                                console.log('Prospectos recargados:', data?.length || 0);
+                                setProspectos(data || []);
+                                setError(null);
+                            }
+                            setLoading(false);
+                        })
+                        .catch(err => {
+                            console.error('Error en la promesa al recargar prospectos:', err);
+                            setError(`Error al actualizar la lista de prospectos: ${err.message || 'Error desconocido'}`);
+                            setLoading(false);
+                        });
+                } catch (err) {
+                    console.error('Error general al recargar prospectos:', err);
+                    setError(`Error al actualizar la lista de prospectos: ${err.message || 'Error desconocido'}`);
+                    setLoading(false);
+                }
+            }}
         />
         
         <VerProspectoModal
@@ -242,6 +279,37 @@ const ProspectosPage = () => {
             show={showEditarModal}
             onHide={() => setShowEditarModal(false)}
             prospecto={selectedProspecto}
+            onProspectoUpdated={(prospectoActualizado) => {
+                // Recargar prospectos después de actualizar uno
+                console.log('Prospecto actualizado, recargando lista...');
+                setLoading(true);
+                
+                try {
+                    supabase
+                        .from('prospectos')
+                        .select('*')
+                        .then(({ data, error }) => {
+                            if (error) {
+                                console.error('Error al recargar prospectos después de actualizar:', error);
+                                setError(`Error al actualizar la lista de prospectos: ${error.message || 'Error desconocido'}`);
+                            } else {
+                                console.log('Prospectos recargados después de actualizar:', data?.length || 0);
+                                setProspectos(data || []);
+                                setError(null);
+                            }
+                            setLoading(false);
+                        })
+                        .catch(err => {
+                            console.error('Error en la promesa al recargar prospectos después de actualizar:', err);
+                            setError(`Error al actualizar la lista de prospectos: ${err.message || 'Error desconocido'}`);
+                            setLoading(false);
+                        });
+                } catch (err) {
+                    console.error('Error general al recargar prospectos después de actualizar:', err);
+                    setError(`Error al actualizar la lista de prospectos: ${err.message || 'Error desconocido'}`);
+                    setLoading(false);
+                }
+            }}
         />
         </>
     );

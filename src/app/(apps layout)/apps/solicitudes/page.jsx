@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Card, Col, Container, Form, InputGroup, Row, Table } from 'react-bootstrap';
 import { Eye, FileText, Filter, Pencil, Plus, Search, Upload, CurrencyDollar } from 'tabler-icons-react';
 import HkBadge from '@/components/@hk-badge/@hk-badge';
@@ -8,6 +8,12 @@ import VerSolicitudModal from './VerSolicitudModal';
 import EditarSolicitudModal from './EditarSolicitudModal';
 import SubirDocumentosModal from './SubirDocumentosModal';
 import DesembolsoModal from './DesembolsoModal';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
 const SolicitudesPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -17,69 +23,54 @@ const SolicitudesPage = () => {
     const [showSubirDocumentosModal, setShowSubirDocumentosModal] = useState(false);
     const [showDesembolsoModal, setShowDesembolsoModal] = useState(false);
     const [selectedSolicitud, setSelectedSolicitud] = useState(null);
+    const [solicitudes, setSolicitudes] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    // Datos de ejemplo para la tabla de solicitudes
-    const solicitudes = [
-        {
-            id: 'SOL-2025-001',
-            cliente: 'Juan Pérez Solano',
-            monto: '$25,000.00',
-            vehiculo: 'Toyota Corolla 2023',
-            asesor: 'Carlos Mendoza',
-            banco: 'Banco Pichincha',
-            fecha: '09/04/2025',
-            estado: 'APROBADA'
-        },
-        {
-            id: 'SOL-2025-002',
-            cliente: 'María González Flores',
-            monto: '$18,500.00',
-            vehiculo: 'Hyundai Tucson 2022',
-            asesor: 'Luis Torres',
-            banco: 'Banco Guayaquil',
-            fecha: '08/04/2025',
-            estado: 'CREADA'
-        },
-        {
-            id: 'SOL-2025-003',
-            cliente: 'Roberto Morales Jiménez',
-            monto: '$32,000.00',
-            vehiculo: 'Kia Sportage 2023',
-            asesor: 'Ana Salazar',
-            banco: 'Banco Bolivariano',
-            fecha: '07/04/2025',
-            estado: 'ENVIADA A BANCO'
-        },
-        {
-            id: 'SOL-2025-004',
-            cliente: 'Sofía Mendoza Rivera',
-            monto: '$22,500.00',
-            vehiculo: 'Chevrolet Onix 2022',
-            asesor: 'Pedro Alvarado',
-            banco: 'Banco Internacional',
-            fecha: '06/04/2025',
-            estado: 'DESEMBOLSADA'
-        },
-        {
-            id: 'SOL-2025-005',
-            cliente: 'Daniel Vargas Torres',
-            monto: '$28,900.00',
-            vehiculo: 'Nissan X-Trail 2021',
-            asesor: 'María Sánchez',
-            banco: 'Produbanco',
-            fecha: '05/04/2025',
-            estado: 'MATRICULADA'
-        }
-    ];
+    // Cargar solicitudes al iniciar
+    useEffect(() => {
+        const fetchSolicitudes = async () => {
+            try {
+                setLoading(true);
+                const { data, error } = await supabase
+                    .from('solicitudes')
+                    .select(`
+                        *,
+                        prospectos:prospecto_id(*),
+                        bancos:banco_id(*)
+                    `);
+                
+                if (error) {
+                    console.error('Error al cargar solicitudes:', error);
+                    setError(`Error al cargar solicitudes: ${error.message || 'Error desconocido'}`);
+                } else {
+                    console.log('Solicitudes cargadas:', data?.length || 0);
+                    setSolicitudes(data || []);
+                    setError(null);
+                }
+            } catch (err) {
+                console.error('Error general al cargar solicitudes:', err);
+                setError(`Error al cargar solicitudes: ${err.message || 'Error desconocido'}`);
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        fetchSolicitudes();
+    }, []);
 
     // Función para filtrar solicitudes según el término de búsqueda
     const filteredSolicitudes = solicitudes.filter(solicitud => {
+        const solicitudId = solicitud.id?.toString() || '';
+        const clienteNombre = solicitud.prospectos?.nombre || '';
+        const vehiculo = solicitud.vehiculo || '';
+        const banco = solicitud.bancos?.nombre || '';
+        
         return (
-            solicitud.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            solicitud.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            solicitud.vehiculo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            solicitud.asesor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            solicitud.banco.toLowerCase().includes(searchTerm.toLowerCase())
+            solicitudId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            clienteNombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            vehiculo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            banco.toLowerCase().includes(searchTerm.toLowerCase())
         );
     });
 
@@ -105,6 +96,16 @@ const SolicitudesPage = () => {
         }
     };
 
+    // Función para formatear montos
+    const formatMonto = (monto) => {
+        return new Intl.NumberFormat('es-ES', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(monto || 0);
+    };
+
     return (
         <>
         <Container fluid className="mt-xl-50p mt-sm-30p mt-15p">
@@ -116,7 +117,10 @@ const SolicitudesPage = () => {
                         </div>
                     </div>
                     <div className="d-flex justify-content-between align-items-center mb-4">
-                        <div></div>
+                        <div>
+                            {loading && <span className="text-muted">Cargando solicitudes...</span>}
+                            {error && <span className="text-danger">{error}</span>}
+                        </div>
                         <div className="d-flex gap-2">
                             <Button variant="outline-secondary">
                                 <span className="d-flex align-items-center">
@@ -171,7 +175,6 @@ const SolicitudesPage = () => {
                                             <th>Cliente</th>
                                             <th>Monto</th>
                                             <th>Vehículo</th>
-                                            <th>Asesor</th>
                                             <th>Banco</th>
                                             <th>Fecha</th>
                                             <th>Estado</th>
@@ -179,102 +182,111 @@ const SolicitudesPage = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {filteredSolicitudes.map((solicitud, index) => (
-                                            <tr key={index}>
-                                                <td>{solicitud.id}</td>
-                                                <td>{solicitud.cliente}</td>
-                                                <td>{solicitud.monto}</td>
-                                                <td>{solicitud.vehiculo}</td>
-                                                <td>{solicitud.asesor}</td>
-                                                <td>{solicitud.banco}</td>
-                                                <td>{solicitud.fecha}</td>
-                                                <td>
-                                                    <HkBadge bg={getBadgeClass(solicitud.estado)} soft>
-                                                        {solicitud.estado}
-                                                    </HkBadge>
-                                                </td>
-                                                <td>
-                                                    <div className="d-flex gap-2">
-                                                        <Button
-                                                            variant="flush-dark"
-                                                            size="sm"
-                                                            className="btn-icon btn-rounded flush-soft-hover"
-                                                            onClick={() => {
-                                                                console.log('Ver solicitud:', solicitud);
-                                                                setSelectedSolicitud({...solicitud});
-                                                                setTimeout(() => {
-                                                                    setShowVerModal(true);
-                                                                }, 100);
-                                                            }}
-                                                        >
-                                                            <span className="icon">
-                                                                <span className="feather-icon">
-                                                                    <Eye size={18} />
-                                                                </span>
-                                                            </span>
-                                                        </Button>
-                                                        <Button
-                                                            variant="flush-dark"
-                                                            size="sm"
-                                                            className="btn-icon btn-rounded flush-soft-hover"
-                                                            onClick={() => {
-                                                                console.log('Editar solicitud:', solicitud);
-                                                                setSelectedSolicitud({...solicitud});
-                                                                setTimeout(() => {
-                                                                    setShowEditarModal(true);
-                                                                }, 100);
-                                                            }}
-                                                        >
-                                                            <span className="icon">
-                                                                <span className="feather-icon">
-                                                                    <Pencil size={18} />
-                                                                </span>
-                                                            </span>
-                                                        </Button>
-                                                        {solicitud.estado === 'CREADA' && (
-                                                            <Button
-                                                                variant="flush-dark"
-                                                                size="sm"
-                                                                className="btn-icon btn-rounded flush-soft-hover"
-                                                                onClick={() => {
-                                                                    console.log('Subir documentos:', solicitud);
-                                                                    setSelectedSolicitud({...solicitud});
-                                                                    setTimeout(() => {
-                                                                        setShowSubirDocumentosModal(true);
-                                                                    }, 100);
-                                                                }}
-                                                            >
-                                                                <span className="icon">
-                                                                    <span className="feather-icon">
-                                                                        <Upload size={18} />
-                                                                    </span>
-                                                                </span>
-                                                            </Button>
-                                                        )}
-                                                        {solicitud.estado === 'APROBADA' && (
-                                                            <Button
-                                                                variant="flush-dark"
-                                                                size="sm"
-                                                                className="btn-icon btn-rounded flush-soft-hover"
-                                                                onClick={() => {
-                                                                    console.log('Registrar desembolso:', solicitud);
-                                                                    setSelectedSolicitud({...solicitud});
-                                                                    setTimeout(() => {
-                                                                        setShowDesembolsoModal(true);
-                                                                    }, 100);
-                                                                }}
-                                                            >
-                                                                <span className="icon">
-                                                                    <span className="feather-icon">
-                                                                        <CurrencyDollar size={18} />
-                                                                    </span>
-                                                                </span>
-                                                            </Button>
-                                                        )}
-                                                    </div>
-                                                </td>
+                                        {loading ? (
+                                            <tr>
+                                                <td colSpan="8" className="text-center">Cargando solicitudes...</td>
                                             </tr>
-                                        ))}
+                                        ) : filteredSolicitudes.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="8" className="text-center">No se encontraron solicitudes</td>
+                                            </tr>
+                                        ) : (
+                                            filteredSolicitudes.map((solicitud) => (
+                                                <tr key={solicitud.id}>
+                                                    <td>{solicitud.id}</td>
+                                                    <td>{solicitud.prospectos?.nombre || 'N/A'}</td>
+                                                    <td>{formatMonto(solicitud.valor_credito)}</td>
+                                                    <td>{solicitud.vehiculo || 'N/A'}</td>
+                                                    <td>{solicitud.bancos?.nombre || 'N/A'}</td>
+                                                    <td>{new Date(solicitud.created_at).toLocaleDateString('es-ES')}</td>
+                                                    <td>
+                                                        <HkBadge bg={getBadgeClass(solicitud.estado)} soft>
+                                                            {solicitud.estado}
+                                                        </HkBadge>
+                                                    </td>
+                                                    <td>
+                                                        <div className="d-flex gap-2">
+                                                            <Button
+                                                                variant="flush-dark"
+                                                                size="sm"
+                                                                className="btn-icon btn-rounded flush-soft-hover"
+                                                                onClick={() => {
+                                                                    console.log('Ver solicitud:', solicitud);
+                                                                    setSelectedSolicitud({...solicitud});
+                                                                    setTimeout(() => {
+                                                                        setShowVerModal(true);
+                                                                    }, 100);
+                                                                }}
+                                                            >
+                                                                <span className="icon">
+                                                                    <span className="feather-icon">
+                                                                        <Eye size={18} />
+                                                                    </span>
+                                                                </span>
+                                                            </Button>
+                                                            <Button
+                                                                variant="flush-dark"
+                                                                size="sm"
+                                                                className="btn-icon btn-rounded flush-soft-hover"
+                                                                onClick={() => {
+                                                                    console.log('Editar solicitud:', solicitud);
+                                                                    setSelectedSolicitud({...solicitud});
+                                                                    setTimeout(() => {
+                                                                        setShowEditarModal(true);
+                                                                    }, 100);
+                                                                }}
+                                                            >
+                                                                <span className="icon">
+                                                                    <span className="feather-icon">
+                                                                        <Pencil size={18} />
+                                                                    </span>
+                                                                </span>
+                                                            </Button>
+                                                            {solicitud.estado === 'CREADA' && (
+                                                                <Button
+                                                                    variant="flush-dark"
+                                                                    size="sm"
+                                                                    className="btn-icon btn-rounded flush-soft-hover"
+                                                                    onClick={() => {
+                                                                        console.log('Subir documentos:', solicitud);
+                                                                        setSelectedSolicitud({...solicitud});
+                                                                        setTimeout(() => {
+                                                                            setShowSubirDocumentosModal(true);
+                                                                        }, 100);
+                                                                    }}
+                                                                >
+                                                                    <span className="icon">
+                                                                        <span className="feather-icon">
+                                                                            <Upload size={18} />
+                                                                        </span>
+                                                                    </span>
+                                                                </Button>
+                                                            )}
+                                                            {solicitud.estado === 'APROBADA' && (
+                                                                <Button
+                                                                    variant="flush-dark"
+                                                                    size="sm"
+                                                                    className="btn-icon btn-rounded flush-soft-hover"
+                                                                    onClick={() => {
+                                                                        console.log('Registrar desembolso:', solicitud);
+                                                                        setSelectedSolicitud({...solicitud});
+                                                                        setTimeout(() => {
+                                                                            setShowDesembolsoModal(true);
+                                                                        }, 100);
+                                                                    }}
+                                                                >
+                                                                    <span className="icon">
+                                                                        <span className="feather-icon">
+                                                                            <CurrencyDollar size={18} />
+                                                                        </span>
+                                                                    </span>
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
                                     </tbody>
                                 </Table>
                             </div>
@@ -288,6 +300,41 @@ const SolicitudesPage = () => {
         <NuevaSolicitudModal
             show={showNuevoModal}
             onHide={() => setShowNuevoModal(false)}
+            onSolicitudCreated={() => {
+                // Recargar solicitudes después de crear una nueva
+                console.log('Solicitud creada, recargando lista...');
+                setLoading(true);
+                
+                try {
+                    supabase
+                        .from('solicitudes')
+                        .select(`
+                            *,
+                            prospectos:prospecto_id(*),
+                            bancos:banco_id(*)
+                        `)
+                        .then(({ data, error }) => {
+                            if (error) {
+                                console.error('Error al recargar solicitudes después de crear:', error);
+                                setError(`Error al actualizar la lista de solicitudes: ${error.message || 'Error desconocido'}`);
+                            } else {
+                                console.log('Solicitudes recargadas después de crear:', data?.length || 0);
+                                setSolicitudes(data || []);
+                                setError(null);
+                            }
+                            setLoading(false);
+                        })
+                        .catch(err => {
+                            console.error('Error en la promesa al recargar solicitudes después de crear:', err);
+                            setError(`Error al actualizar la lista de solicitudes: ${err.message || 'Error desconocido'}`);
+                            setLoading(false);
+                        });
+                } catch (err) {
+                    console.error('Error general al recargar solicitudes después de crear:', err);
+                    setError(`Error al actualizar la lista de solicitudes: ${err.message || 'Error desconocido'}`);
+                    setLoading(false);
+                }
+            }}
         />
         
         <VerSolicitudModal
@@ -300,18 +347,123 @@ const SolicitudesPage = () => {
             show={showEditarModal}
             onHide={() => setShowEditarModal(false)}
             solicitud={selectedSolicitud}
+            onSolicitudUpdated={() => {
+                // Recargar solicitudes después de actualizar una
+                console.log('Solicitud actualizada, recargando lista...');
+                setLoading(true);
+                
+                try {
+                    supabase
+                        .from('solicitudes')
+                        .select(`
+                            *,
+                            prospectos:prospecto_id(*),
+                            bancos:banco_id(*)
+                        `)
+                        .then(({ data, error }) => {
+                            if (error) {
+                                console.error('Error al recargar solicitudes después de actualizar:', error);
+                                setError(`Error al actualizar la lista de solicitudes: ${error.message || 'Error desconocido'}`);
+                            } else {
+                                console.log('Solicitudes recargadas después de actualizar:', data?.length || 0);
+                                setSolicitudes(data || []);
+                                setError(null);
+                            }
+                            setLoading(false);
+                        })
+                        .catch(err => {
+                            console.error('Error en la promesa al recargar solicitudes después de actualizar:', err);
+                            setError(`Error al actualizar la lista de solicitudes: ${err.message || 'Error desconocido'}`);
+                            setLoading(false);
+                        });
+                } catch (err) {
+                    console.error('Error general al recargar solicitudes después de actualizar:', err);
+                    setError(`Error al actualizar la lista de solicitudes: ${err.message || 'Error desconocido'}`);
+                    setLoading(false);
+                }
+            }}
         />
 
         <SubirDocumentosModal
             show={showSubirDocumentosModal}
             onHide={() => setShowSubirDocumentosModal(false)}
             solicitud={selectedSolicitud}
+            onDocumentosSubidos={() => {
+                // Recargar solicitudes después de subir documentos
+                console.log('Documentos subidos, recargando lista...');
+                setLoading(true);
+                
+                try {
+                    supabase
+                        .from('solicitudes')
+                        .select(`
+                            *,
+                            prospectos:prospecto_id(*),
+                            bancos:banco_id(*)
+                        `)
+                        .then(({ data, error }) => {
+                            if (error) {
+                                console.error('Error al recargar solicitudes después de subir documentos:', error);
+                                setError(`Error al actualizar la lista de solicitudes: ${error.message || 'Error desconocido'}`);
+                            } else {
+                                console.log('Solicitudes recargadas después de subir documentos:', data?.length || 0);
+                                setSolicitudes(data || []);
+                                setError(null);
+                            }
+                            setLoading(false);
+                        })
+                        .catch(err => {
+                            console.error('Error en la promesa al recargar solicitudes después de subir documentos:', err);
+                            setError(`Error al actualizar la lista de solicitudes: ${err.message || 'Error desconocido'}`);
+                            setLoading(false);
+                        });
+                } catch (err) {
+                    console.error('Error general al recargar solicitudes después de subir documentos:', err);
+                    setError(`Error al actualizar la lista de solicitudes: ${err.message || 'Error desconocido'}`);
+                    setLoading(false);
+                }
+            }}
         />
 
         <DesembolsoModal
             show={showDesembolsoModal}
             onHide={() => setShowDesembolsoModal(false)}
             solicitud={selectedSolicitud}
+            onDesembolsoRegistrado={() => {
+                // Recargar solicitudes después de registrar desembolso
+                console.log('Desembolso registrado, recargando lista...');
+                setLoading(true);
+                
+                try {
+                    supabase
+                        .from('solicitudes')
+                        .select(`
+                            *,
+                            prospectos:prospecto_id(*),
+                            bancos:banco_id(*)
+                        `)
+                        .then(({ data, error }) => {
+                            if (error) {
+                                console.error('Error al recargar solicitudes después de registrar desembolso:', error);
+                                setError(`Error al actualizar la lista de solicitudes: ${error.message || 'Error desconocido'}`);
+                            } else {
+                                console.log('Solicitudes recargadas después de registrar desembolso:', data?.length || 0);
+                                setSolicitudes(data || []);
+                                setError(null);
+                            }
+                            setLoading(false);
+                        })
+                        .catch(err => {
+                            console.error('Error en la promesa al recargar solicitudes después de registrar desembolso:', err);
+                            setError(`Error al actualizar la lista de solicitudes: ${err.message || 'Error desconocido'}`);
+                            setLoading(false);
+                        });
+                } catch (err) {
+                    console.error('Error general al recargar solicitudes después de registrar desembolso:', err);
+                    setError(`Error al actualizar la lista de solicitudes: ${err.message || 'Error desconocido'}`);
+                    setLoading(false);
+                }
+            }}
         />
         </>
     );
