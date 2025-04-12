@@ -31,6 +31,21 @@
       "static/chunks/main-app.js",
       "static/chunks/app/_not-found/page.js"
     ],
+    "/(apps layout)/apps/prospectos/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(apps layout)/apps/prospectos/page.js"
+    ],
+    "/(apps layout)/apps/solicitudes/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(apps layout)/apps/solicitudes/page.js"
+    ],
+    "/(apps layout)/apps/bancos/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(apps layout)/apps/bancos/page.js"
+    ],
     "/(apps layout)/apps/usuarios/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
