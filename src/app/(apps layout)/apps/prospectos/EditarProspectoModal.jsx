@@ -1,8 +1,15 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Button, Col, Form, Modal, Row } from 'react-bootstrap';
+import { Button, Col, Form, Modal, Row, Spinner } from 'react-bootstrap';
+import { createClient } from '@supabase/supabase-js';
 
-const EditarProspectoModal = ({ show, onHide, prospecto }) => {
+// Crear cliente de Supabase
+const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
+
+const EditarProspectoModal = ({ show, onHide, prospecto, onProspectoUpdated }) => {
     // Estado para almacenar los datos del formulario
     const [formData, setFormData] = useState({
         nombre: '',
@@ -10,9 +17,12 @@ const EditarProspectoModal = ({ show, onHide, prospecto }) => {
         telefono: '',
         email: '',
         asesor: '',
-        canal: 'Orgánico',
-        observaciones: 'Cliente interesado en un crédito para vehículo nuevo. Requiere financiamiento del 70% del valor.'
+        canal: '',
+        observaciones: '',
+        estado: ''
     });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
     // Actualizar el formulario cuando cambia el prospecto
     useEffect(() => {
@@ -23,8 +33,9 @@ const EditarProspectoModal = ({ show, onHide, prospecto }) => {
                 telefono: prospecto.telefono || '',
                 email: prospecto.email || '',
                 asesor: prospecto.asesor || '',
-                canal: 'Orgánico', // Valor por defecto
-                observaciones: 'Cliente interesado en un crédito para vehículo nuevo. Requiere financiamiento del 70% del valor.' // Valor por defecto
+                canal: prospecto.canal || 'Orgánico',
+                observaciones: prospecto.observaciones || '',
+                estado: prospecto.estado || 'NUEVO'
             });
         }
     }, [prospecto]);
@@ -56,20 +67,64 @@ const EditarProspectoModal = ({ show, onHide, prospecto }) => {
         });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Aquí iría la lógica para actualizar el prospecto
-        console.log('Datos actualizados del prospecto:', formData);
-        onHide();
+        setLoading(true);
+        setError(null);
+        
+        try {
+            // Preparar datos para actualizar en la base de datos
+            const prospectoActualizado = {
+                nombre: formData.nombre,
+                cedula: formData.cedula,
+                telefono: formData.telefono,
+                email: formData.email,
+                asesor: formData.asesor,
+                canal: formData.canal,
+                observaciones: formData.observaciones,
+                estado: formData.estado
+            };
+            
+            // Actualizar en Supabase
+            const { data, error: supabaseError } = await supabase
+                .from('prospectos')
+                .update(prospectoActualizado)
+                .eq('id', prospecto.id)
+                .select();
+            
+            if (supabaseError) {
+                throw new Error(`Error al actualizar el prospecto: ${supabaseError.message}`);
+            }
+            
+            console.log('Prospecto actualizado exitosamente:', data);
+            
+            // Cerrar modal
+            onHide();
+            
+            // Notificar al componente padre para actualizar la lista
+            if (onProspectoUpdated && typeof onProspectoUpdated === 'function') {
+                onProspectoUpdated(data[0]);
+            }
+        } catch (err) {
+            console.error('Error al actualizar el prospecto:', err);
+            setError(err.message || 'Error al actualizar el prospecto. Por favor, intente de nuevo.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
-        <Modal show={show} onHide={onHide} size="lg" centered>
+        <Modal show={show} onHide={onHide} size="lg" centered backdrop="static">
             <Modal.Header closeButton>
                 <Modal.Title>Editar Prospecto</Modal.Title>
             </Modal.Header>
             <Form onSubmit={handleSubmit}>
                 <Modal.Body>
+                    {error && (
+                        <div className="alert alert-danger" role="alert">
+                            {error}
+                        </div>
+                    )}
                     <Row className="gx-3">
                         <Col sm={12} className="form-group mb-3">
                             <Form.Label>Nombre Completo</Form.Label>
@@ -80,6 +135,7 @@ const EditarProspectoModal = ({ show, onHide, prospecto }) => {
                                 onChange={handleChange}
                                 placeholder="Ingrese nombre completo"
                                 required
+                                disabled={loading}
                             />
                         </Col>
                     </Row>
@@ -93,6 +149,7 @@ const EditarProspectoModal = ({ show, onHide, prospecto }) => {
                                 onChange={handleChange}
                                 placeholder="Ingrese cédula o RUC"
                                 required
+                                disabled={loading}
                             />
                         </Col>
                         <Col sm={6} className="form-group mb-3">
@@ -104,6 +161,7 @@ const EditarProspectoModal = ({ show, onHide, prospecto }) => {
                                 onChange={handleChange}
                                 placeholder="Ingrese número de teléfono"
                                 required
+                                disabled={loading}
                             />
                         </Col>
                     </Row>
@@ -117,6 +175,7 @@ const EditarProspectoModal = ({ show, onHide, prospecto }) => {
                                 onChange={handleChange}
                                 placeholder="Ingrese correo electrónico"
                                 required
+                                disabled={loading}
                             />
                         </Col>
                     </Row>
@@ -128,6 +187,7 @@ const EditarProspectoModal = ({ show, onHide, prospecto }) => {
                                 value={formData.asesor}
                                 onChange={handleChange}
                                 required
+                                disabled={loading}
                             >
                                 <option value="">Seleccione un asesor</option>
                                 <option value="Carlos Mendoza">Carlos Mendoza</option>
@@ -143,6 +203,7 @@ const EditarProspectoModal = ({ show, onHide, prospecto }) => {
                                 value={formData.canal}
                                 onChange={handleChange}
                                 required
+                                disabled={loading}
                             >
                                 <option value="">Seleccione un canal</option>
                                 <option value="Orgánico">Orgánico</option>
@@ -162,6 +223,7 @@ const EditarProspectoModal = ({ show, onHide, prospecto }) => {
                                 onChange={handleChange}
                                 placeholder="Ingrese observaciones"
                                 rows={3}
+                                disabled={loading}
                             />
                         </Col>
                     </Row>
@@ -170,10 +232,15 @@ const EditarProspectoModal = ({ show, onHide, prospecto }) => {
                             <Form.Label>Estado</Form.Label>
                             <Form.Select
                                 name="estado"
-                                defaultValue={prospecto.estado}
+                                value={formData.estado}
+                                onChange={handleChange}
                                 required
+                                disabled={loading}
                             >
-                                <option value="CREADA">CREADA</option>
+                                <option value="NUEVO">NUEVO</option>
+                                <option value="CONTACTADO">CONTACTADO</option>
+                                <option value="INTERESADO">INTERESADO</option>
+                                <option value="NO INTERESADO">NO INTERESADO</option>
                                 <option value="STAND BY">STAND BY</option>
                                 <option value="SUJETO">SUJETO</option>
                                 <option value="NO SUJETO">NO SUJETO</option>
@@ -182,11 +249,18 @@ const EditarProspectoModal = ({ show, onHide, prospecto }) => {
                     </Row>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button variant="secondary" onClick={onHide}>
+                    <Button variant="secondary" onClick={onHide} disabled={loading}>
                         Cancelar
                     </Button>
-                    <Button variant="primary" type="submit">
-                        Guardar Cambios
+                    <Button variant="primary" type="submit" disabled={loading}>
+                        {loading ? (
+                            <>
+                                <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" />
+                                Guardando...
+                            </>
+                        ) : (
+                            'Guardar Cambios'
+                        )}
                     </Button>
                 </Modal.Footer>
             </Form>
