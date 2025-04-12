@@ -14,12 +14,11 @@ const EditarProspectoModal = ({ show, onHide, prospecto, onProspectoUpdated }) =
     const [formData, setFormData] = useState({
         nombre: '',
         cedula: '',
-        telefono: '',
+        celular: '',
         email: '',
-        asesor: '',
-        canal: '',
-        observaciones: '',
-        estado: ''
+        ubicacion: '',
+        origen: '',
+        notas: ''
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -30,12 +29,11 @@ const EditarProspectoModal = ({ show, onHide, prospecto, onProspectoUpdated }) =
             setFormData({
                 nombre: prospecto.nombre || '',
                 cedula: prospecto.cedula || '',
-                telefono: prospecto.telefono || '',
+                celular: prospecto.celular || '',
                 email: prospecto.email || '',
-                asesor: prospecto.asesor || '',
-                canal: prospecto.canal || 'Orgánico',
-                observaciones: prospecto.observaciones || '',
-                estado: prospecto.estado || 'NUEVO'
+                ubicacion: prospecto.ubicacion || '',
+                origen: prospecto.origen || '',
+                notas: prospecto.notas || ''
             });
         }
     }, [prospecto]);
@@ -77,12 +75,11 @@ const EditarProspectoModal = ({ show, onHide, prospecto, onProspectoUpdated }) =
             const prospectoActualizado = {
                 nombre: formData.nombre,
                 cedula: formData.cedula,
-                telefono: formData.telefono,
+                celular: formData.celular,
                 email: formData.email,
-                asesor: formData.asesor,
-                canal: formData.canal,
-                observaciones: formData.observaciones,
-                estado: formData.estado
+                ubicacion: formData.ubicacion,
+                origen: formData.origen,
+                notas: formData.notas
             };
             
             // Actualizar en Supabase
@@ -156,8 +153,8 @@ const EditarProspectoModal = ({ show, onHide, prospecto, onProspectoUpdated }) =
                             <Form.Label>Teléfono</Form.Label>
                             <Form.Control
                                 type="tel"
-                                name="telefono"
-                                value={formData.telefono}
+                                name="celular"
+                                value={formData.celular}
                                 onChange={handleChange}
                                 placeholder="Ingrese número de teléfono"
                                 required
@@ -180,32 +177,30 @@ const EditarProspectoModal = ({ show, onHide, prospecto, onProspectoUpdated }) =
                         </Col>
                     </Row>
                     <Row className="gx-3">
-                        <Col sm={6} className="form-group mb-3">
-                            <Form.Label>Asesor</Form.Label>
-                            <Form.Select
-                                name="asesor"
-                                value={formData.asesor}
+                        <Col sm={12} className="form-group mb-3">
+                            <Form.Label>Ubicación</Form.Label>
+                            <Form.Control
+                                type="text"
+                                name="ubicacion"
+                                value={formData.ubicacion}
                                 onChange={handleChange}
+                                placeholder="Ingrese ubicación"
                                 required
                                 disabled={loading}
-                            >
-                                <option value="">Seleccione un asesor</option>
-                                <option value="Carlos Mendoza">Carlos Mendoza</option>
-                                <option value="Luis Torres">Luis Torres</option>
-                                <option value="Ana Salazar">Ana Salazar</option>
-                                <option value="Pedro Alvarado">Pedro Alvarado</option>
-                            </Form.Select>
+                            />
                         </Col>
-                        <Col sm={6} className="form-group mb-3">
-                            <Form.Label>Canal de Ingreso</Form.Label>
+                    </Row>
+                    <Row className="gx-3">
+                        <Col sm={12} className="form-group mb-3">
+                            <Form.Label>Origen</Form.Label>
                             <Form.Select
-                                name="canal"
-                                value={formData.canal}
+                                name="origen"
+                                value={formData.origen}
                                 onChange={handleChange}
                                 required
                                 disabled={loading}
                             >
-                                <option value="">Seleccione un canal</option>
+                                <option value="">Seleccione un origen</option>
                                 <option value="Orgánico">Orgánico</option>
                                 <option value="Referido">Referido</option>
                                 <option value="Broker">Broker</option>
@@ -215,36 +210,16 @@ const EditarProspectoModal = ({ show, onHide, prospecto, onProspectoUpdated }) =
                     </Row>
                     <Row className="gx-3">
                         <Col sm={12} className="form-group mb-3">
-                            <Form.Label>Observaciones</Form.Label>
+                            <Form.Label>Notas</Form.Label>
                             <Form.Control
                                 as="textarea"
-                                name="observaciones"
-                                value={formData.observaciones}
+                                name="notas"
+                                value={formData.notas}
                                 onChange={handleChange}
-                                placeholder="Ingrese observaciones"
+                                placeholder="Ingrese notas"
                                 rows={3}
                                 disabled={loading}
                             />
-                        </Col>
-                    </Row>
-                    <Row className="gx-3">
-                        <Col sm={12} className="form-group mb-3">
-                            <Form.Label>Estado</Form.Label>
-                            <Form.Select
-                                name="estado"
-                                value={formData.estado}
-                                onChange={handleChange}
-                                required
-                                disabled={loading}
-                            >
-                                <option value="NUEVO">NUEVO</option>
-                                <option value="CONTACTADO">CONTACTADO</option>
-                                <option value="INTERESADO">INTERESADO</option>
-                                <option value="NO INTERESADO">NO INTERESADO</option>
-                                <option value="STAND BY">STAND BY</option>
-                                <option value="SUJETO">SUJETO</option>
-                                <option value="NO SUJETO">NO SUJETO</option>
-                            </Form.Select>
                         </Col>
                     </Row>
                 </Modal.Body>

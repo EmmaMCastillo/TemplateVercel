@@ -55,28 +55,9 @@ const ProspectosPage = () => {
     const filteredProspectos = prospectos.filter(prospecto => 
         prospecto.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         prospecto.cedula?.includes(searchTerm) ||
-        prospecto.telefono?.includes(searchTerm) ||
+        prospecto.celular?.includes(searchTerm) ||
         prospecto.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
-
-    // Función para obtener la clase de badge según el estado
-    const getBadgeClass = (estado) => {
-        switch (estado) {
-            case 'CREADA':
-            case 'NUEVO':
-                return 'success';
-            case 'STAND BY':
-            case 'CONTACTADO':
-                return 'warning';
-            case 'SUJETO':
-            case 'INTERESADO':
-                return 'primary';
-            case 'NO SUJETO':
-                return 'danger';
-            default:
-                return 'secondary';
-        }
-    };
 
     return (
         <>
@@ -147,7 +128,7 @@ const ProspectosPage = () => {
                                             <th>CÉDULA/RUC</th>
                                             <th>TELÉFONO</th>
                                             <th>EMAIL</th>
-                                            <th>ESTADO</th>
+                                            <th>ORIGEN</th>
                                             <th>ACCIONES</th>
                                         </tr>
                                     </thead>
@@ -165,13 +146,9 @@ const ProspectosPage = () => {
                                                 <tr key={prospecto.id}>
                                                     <td>{prospecto.nombre}</td>
                                                     <td>{prospecto.cedula}</td>
-                                                    <td>{prospecto.telefono}</td>
+                                                    <td>{prospecto.celular}</td>
                                                     <td>{prospecto.email}</td>
-                                                    <td>
-                                                        <HkBadge bg={getBadgeClass(prospecto.estado)} soft>
-                                                            {prospecto.estado}
-                                                        </HkBadge>
-                                                    </td>
+                                                    <td>{prospecto.origen}</td>
                                                     <td>
                                                         <div className="d-flex gap-2">
                                                             <Button

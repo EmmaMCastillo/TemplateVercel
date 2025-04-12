@@ -30,28 +30,6 @@ const VerProspectoModal = ({ show, onHide, prospecto }) => {
         );
     }
 
-    // Función para obtener la clase de badge según el estado
-    const getBadgeClass = (estado) => {
-        switch (estado) {
-            case 'NUEVO':
-                return 'success';
-            case 'CONTACTADO':
-                return 'info';
-            case 'INTERESADO':
-                return 'primary';
-            case 'NO INTERESADO':
-                return 'danger';
-            case 'STAND BY':
-                return 'warning';
-            case 'SUJETO':
-                return 'violet';
-            case 'NO SUJETO':
-                return 'danger';
-            default:
-                return 'secondary';
-        }
-    };
-
     // Función para formatear la fecha
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
@@ -94,11 +72,6 @@ const VerProspectoModal = ({ show, onHide, prospecto }) => {
                 <Row className="mb-3">
                     <Col xs={12} className="mb-3">
                         <h5 className="mb-0">{prospecto.nombre || 'Sin nombre'}</h5>
-                        <div className="mt-1">
-                            <HkBadge bg={getBadgeClass(prospecto.estado)} soft>
-                                {prospecto.estado || 'Sin estado'}
-                            </HkBadge>
-                        </div>
                     </Col>
                 </Row>
                 <Row className="mb-3">
@@ -108,7 +81,7 @@ const VerProspectoModal = ({ show, onHide, prospecto }) => {
                     </Col>
                     <Col xs={12} md={6}>
                         <div className="text-muted mb-1">Teléfono</div>
-                        <div className="fw-medium">{prospecto.telefono || 'No disponible'}</div>
+                        <div className="fw-medium">{prospecto.celular || 'No disponible'}</div>
                     </Col>
                 </Row>
                 <Row className="mb-3">
@@ -119,25 +92,25 @@ const VerProspectoModal = ({ show, onHide, prospecto }) => {
                 </Row>
                 <Row className="mb-3">
                     <Col xs={12} md={6} className="mb-3 mb-md-0">
-                        <div className="text-muted mb-1">Asesor</div>
-                        <div className="fw-medium">{prospecto.asesor || 'No asignado'}</div>
+                        <div className="text-muted mb-1">Ubicación</div>
+                        <div className="fw-medium">{prospecto.ubicacion || 'No disponible'}</div>
                     </Col>
                     <Col xs={12} md={6}>
                         <div className="text-muted mb-1">Fecha de Creación</div>
-                        <div className="fw-medium">{formatDate(prospecto.created_at || prospecto.fecha_creacion)}</div>
+                        <div className="fw-medium">{formatDate(prospecto.created_at)}</div>
                     </Col>
                 </Row>
                 <Row className="mb-3">
                     <Col xs={12}>
-                        <div className="text-muted mb-1">Canal de Ingreso</div>
-                        <div className="fw-medium">{prospecto.canal || 'No especificado'}</div>
+                        <div className="text-muted mb-1">Origen</div>
+                        <div className="fw-medium">{prospecto.origen || 'No especificado'}</div>
                     </Col>
                 </Row>
                 <Row>
                     <Col xs={12}>
-                        <div className="text-muted mb-1">Observaciones</div>
+                        <div className="text-muted mb-1">Notas</div>
                         <div className="fw-medium">
-                            {prospecto.observaciones || 'Sin observaciones'}
+                            {prospecto.notas || 'Sin notas'}
                         </div>
                     </Col>
                 </Row>
