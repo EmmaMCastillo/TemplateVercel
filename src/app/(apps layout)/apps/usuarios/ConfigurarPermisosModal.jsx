@@ -99,11 +99,9 @@ const ConfigurarPermisosModal = ({ show, onHide, onPermissionsUpdated }) => {
         setError(null);
         
         try {
-            // Aquí cargaríamos los permisos desde la base de datos
-            // Por ahora, vamos a generar permisos por defecto
+            // Generar permisos por defecto para cada módulo y acción
             const defaultPermissions = {};
             
-            // Generar permisos por defecto para cada módulo y acción
             Object.keys(modulesDefinition).forEach(moduleId => {
                 defaultPermissions[moduleId] = { access: roleId === 'admin' ? 'admin' : 'read' };
                 
@@ -142,19 +140,27 @@ const ConfigurarPermisosModal = ({ show, onHide, onPermissionsUpdated }) => {
         setSelectedRole(e.target.value);
     };
 
-    // Función para manejar el cambio de permiso
+    // Función para manejar el cambio de permiso individual
     const handlePermissionChange = (itemId, accessLevel) => {
         setPermissions(prevPermissions => {
             const newPermissions = { ...prevPermissions };
             newPermissions[itemId] = { access: accessLevel };
+            return newPermissions;
+        });
+    };
+
+    // Función para manejar el cambio de permiso de módulo
+    const handleModulePermissionChange = (moduleId, accessLevel) => {
+        setPermissions(prevPermissions => {
+            const newPermissions = { ...prevPermissions };
+            // Actualizar el permiso del módulo
+            newPermissions[moduleId] = { access: accessLevel };
             
-            // Si es un módulo, actualizar también sus acciones
-            if (modulesDefinition[itemId]) {
-                modulesDefinition[itemId].actions.forEach(action => {
-                    const actionId = `${itemId}_${action.id}`;
-                    newPermissions[actionId] = { access: accessLevel };
-                });
-            }
+            // Actualizar los permisos de todas las acciones del módulo
+            modulesDefinition[moduleId].actions.forEach(action => {
+                const actionId = `${moduleId}_${action.id}`;
+                newPermissions[actionId] = { access: accessLevel };
+            });
             
             return newPermissions;
         });
@@ -167,25 +173,49 @@ const ConfigurarPermisosModal = ({ show, onHide, onPermissionsUpdated }) => {
         setSuccess(false);
         
         try {
-            // Aquí guardaríamos los permisos en la base de datos
-            const { data, error } = await supabase
+            // Verificar si ya existe un registro para este rol
+            const { data: existingData, error: checkError } = await supabase
                 .from('roles_permisos')
-                .upsert({
-                    rol_id: selectedRole,
-                    permisos: permissions
-                })
-                .select();
+                .select('id')
+                .eq('rol_id', selectedRole)
+                .single();
             
-            if (error) {
-                throw new Error(`Error al guardar los permisos: ${error.message}`);
+            let result;
+            
+            if (existingData && !checkError) {
+                // Actualizar el registro existente
+                const { data, error } = await supabase
+                    .from('roles_permisos')
+                    .update({ permisos: permissions })
+                    .eq('id', existingData.id)
+                    .select();
+                
+                result = { data, error };
+            } else {
+                // Insertar un nuevo registro
+                const { data, error } = await supabase
+                    .from('roles_permisos')
+                    .insert([
+                        {
+                            rol_id: selectedRole,
+                            permisos: permissions
+                        }
+                    ])
+                    .select();
+                
+                result = { data, error };
             }
             
-            console.log('Permisos guardados exitosamente:', data);
+            if (result.error) {
+                throw new Error(`Error al guardar los permisos: ${result.error.message}`);
+            }
+            
+            console.log('Permisos guardados exitosamente:', result.data);
             setSuccess(true);
             
             // Notificar al componente padre
             if (onPermissionsUpdated && typeof onPermissionsUpdated === 'function') {
-                onPermissionsUpdated(data);
+                onPermissionsUpdated(result.data);
             }
             
             // Cerrar modal después de un tiempo
@@ -281,7 +311,7 @@ const ConfigurarPermisosModal = ({ show, onHide, onPermissionsUpdated }) => {
                                                             <div 
                                                                 key={level.id}
                                                                 className={`permission-option ${level.class} ${permissions[moduleId]?.access === level.id ? 'selected' : ''}`}
-                                                                onClick={() => handlePermissionChange(moduleId, level.id)}
+                                                                onClick={() => handleModulePermissionChange(moduleId, level.id)}
                                                             ></div>
                                                         ))}
                                                     </td>

@@ -1,11 +1,18 @@
 'use client';
-import React, { useState } from 'react';
-import { Button, Card, Col, Container, Form, InputGroup, Row, Table } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Button, Card, Col, Container, Form, InputGroup, Row, Table, Spinner } from 'react-bootstrap';
 import { Edit, Filter, Plus, Search, Trash, Adjustments } from 'tabler-icons-react';
 import HkBadge from '@/components/@hk-badge/@hk-badge';
 import NuevoUsuarioModal from './NuevoUsuarioModal';
 import EditarUsuarioModal from './EditarUsuarioModal';
 import ConfigurarPermisosModal from './ConfigurarPermisosModal';
+import { createClient } from '@supabase/supabase-js';
+
+// Crear cliente de Supabase
+const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
 const UsuariosPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -13,21 +20,43 @@ const UsuariosPage = () => {
     const [showEditarModal, setShowEditarModal] = useState(false);
     const [showPermisosModal, setShowPermisosModal] = useState(false);
     const [selectedUsuario, setSelectedUsuario] = useState(null);
+    const [usuarios, setUsuarios] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    // Datos de ejemplo para la tabla de usuarios
-    const usuarios = [
-        {
-            id: 1,
-            nombre: 'Juan Pérez',
-            email: 'juan.perez@example.com',
-            estado: 'Activo'
+    // Cargar usuarios al iniciar
+    useEffect(() => {
+        fetchUsuarios();
+    }, []);
+
+    // Función para cargar usuarios desde la base de datos
+    const fetchUsuarios = async () => {
+        try {
+            setLoading(true);
+            const { data, error } = await supabase
+                .from('usuarios')
+                .select('*');
+            
+            if (error) {
+                console.error('Error al cargar usuarios:', error);
+                setError(`Error al cargar usuarios: ${error.message || 'Error desconocido'}`);
+            } else {
+                console.log('Usuarios cargados:', data?.length || 0);
+                setUsuarios(data || []);
+                setError(null);
+            }
+        } catch (err) {
+            console.error('Error general al cargar usuarios:', err);
+            setError(`Error al cargar usuarios: ${err.message || 'Error desconocido'}`);
+        } finally {
+            setLoading(false);
         }
-    ];
+    };
 
     // Filtrar usuarios según el término de búsqueda
     const filteredUsuarios = usuarios.filter(usuario => 
-        usuario.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        usuario.email.toLowerCase().includes(searchTerm.toLowerCase())
+        usuario.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        usuario.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const handleOpenNuevoModal = () => setShowNuevoModal(true);
@@ -42,6 +71,49 @@ const UsuariosPage = () => {
     const handleOpenPermisosModal = () => setShowPermisosModal(true);
     const handleClosePermisosModal = () => setShowPermisosModal(false);
 
+    // Función para manejar la creación de un nuevo usuario
+    const handleUsuarioCreated = (nuevoUsuario) => {
+        console.log('Usuario creado:', nuevoUsuario);
+        // Actualizar la lista de usuarios
+        fetchUsuarios();
+    };
+
+    // Función para manejar la actualización de un usuario
+    const handleUsuarioUpdated = (usuarioActualizado) => {
+        console.log('Usuario actualizado:', usuarioActualizado);
+        // Actualizar la lista de usuarios
+        fetchUsuarios();
+    };
+
+    // Función para manejar la eliminación de un usuario
+    const handleEliminarUsuario = async (usuarioId) => {
+        if (!confirm('¿Está seguro de que desea eliminar este usuario?')) {
+            return;
+        }
+        
+        try {
+            setLoading(true);
+            const { error } = await supabase
+                .from('usuarios')
+                .delete()
+                .eq('id', usuarioId);
+            
+            if (error) {
+                console.error('Error al eliminar usuario:', error);
+                alert(`Error al eliminar usuario: ${error.message || 'Error desconocido'}`);
+            } else {
+                console.log('Usuario eliminado exitosamente');
+                // Actualizar la lista de usuarios
+                fetchUsuarios();
+            }
+        } catch (err) {
+            console.error('Error general al eliminar usuario:', err);
+            alert(`Error al eliminar usuario: ${err.message || 'Error desconocido'}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <>
         <Container fluid className="mt-xl-50p mt-sm-30p mt-15p">
@@ -53,7 +125,10 @@ const UsuariosPage = () => {
                         </div>
                     </div>
                     <div className="d-flex justify-content-between align-items-center mb-4">
-                        <div></div>
+                        <div>
+                            {loading && <span className="text-muted">Cargando usuarios...</span>}
+                            {error && <span className="text-danger">{error}</span>}
+                        </div>
                         <div className="d-flex gap-2">
                             <Button variant="outline-secondary">
                                 <span className="d-flex align-items-center">
@@ -103,61 +178,76 @@ const UsuariosPage = () => {
                                         <tr>
                                             <th>NOMBRE</th>
                                             <th>EMAIL</th>
-                                            <th>ESTADO</th>
+                                            <th>ROL</th>
                                             <th className="text-center">ACCIONES</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {filteredUsuarios.map((usuario) => (
-                                            <tr key={usuario.id}>
-                                                <td>{usuario.nombre}</td>
-                                                <td>{usuario.email}</td>
-                                                <td>
-                                                    <HkBadge bg="success" soft>
-                                                        {usuario.estado}
-                                                    </HkBadge>
-                                                </td>
-                                                <td>
-                                                    <div className="d-flex justify-content-center">
-                                                        <Button
-                                                            variant="flush-dark"
-                                                            size="sm"
-                                                            className="btn-icon btn-rounded flush-soft-hover"
-                                                            onClick={() => handleOpenEditarModal(usuario)}
-                                                        >
-                                                            <span className="icon">
-                                                                <span className="feather-icon">
-                                                                    <Edit size={18} />
-                                                                </span>
-                                                            </span>
-                                                        </Button>
-                                                        <Button
-                                                            variant="flush-dark"
-                                                            size="sm"
-                                                            className="btn-icon btn-rounded flush-soft-hover"
-                                                            onClick={handleOpenPermisosModal}
-                                                        >
-                                                            <span className="icon">
-                                                                <span className="feather-icon">
-                                                                    <Adjustments size={18} />
-                                                                </span>
-                                                            </span>
-                                                        </Button>
-                                                        <Button 
-                                                            variant="flush-dark" 
-                                                            size="sm" 
-                                                            className="btn-icon btn-rounded flush-soft-hover text-danger"
-                                                        >
-                                                            <span className="icon">
-                                                                <span className="feather-icon">
-                                                                    <Trash size={18} />
-                                                                </span>
-                                                            </span>
-                                                        </Button>
-                                                    </div>
+                                        {loading ? (
+                                            <tr>
+                                                <td colSpan="4" className="text-center py-4">
+                                                    <Spinner animation="border" role="status">
+                                                        <span className="visually-hidden">Cargando...</span>
+                                                    </Spinner>
                                                 </td>
                                             </tr>
-                                        ))}
+                                        ) : filteredUsuarios.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="4" className="text-center">No se encontraron usuarios</td>
+                                            </tr>
+                                        ) : (
+                                            filteredUsuarios.map((usuario) => (
+                                                <tr key={usuario.id}>
+                                                    <td>{usuario.nombre}</td>
+                                                    <td>{usuario.email}</td>
+                                                    <td>
+                                                        <HkBadge bg="success" soft>
+                                                            {usuario.rol || 'Usuario'}
+                                                        </HkBadge>
+                                                    </td>
+                                                    <td>
+                                                        <div className="d-flex justify-content-center">
+                                                            <Button
+                                                                variant="flush-dark"
+                                                                size="sm"
+                                                                className="btn-icon btn-rounded flush-soft-hover"
+                                                                onClick={() => handleOpenEditarModal(usuario)}
+                                                            >
+                                                                <span className="icon">
+                                                                    <span className="feather-icon">
+                                                                        <Edit size={18} />
+                                                                    </span>
+                                                                </span>
+                                                            </Button>
+                                                            <Button
+                                                                variant="flush-dark"
+                                                                size="sm"
+                                                                className="btn-icon btn-rounded flush-soft-hover"
+                                                                onClick={handleOpenPermisosModal}
+                                                            >
+                                                                <span className="icon">
+                                                                    <span className="feather-icon">
+                                                                        <Adjustments size={18} />
+                                                                    </span>
+                                                                </span>
+                                                            </Button>
+                                                            <Button 
+                                                                variant="flush-dark" 
+                                                                size="sm" 
+                                                                className="btn-icon btn-rounded flush-soft-hover text-danger"
+                                                                onClick={() => handleEliminarUsuario(usuario.id)}
+                                                            >
+                                                                <span className="icon">
+                                                                    <span className="feather-icon">
+                                                                        <Trash size={18} />
+                                                                    </span>
+                                                                </span>
+                                                            </Button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
                                     </tbody>
                                 </Table>
                             </div>
@@ -171,17 +261,20 @@ const UsuariosPage = () => {
         <NuevoUsuarioModal
             show={showNuevoModal}
             onHide={handleCloseNuevoModal}
+            onUsuarioCreated={handleUsuarioCreated}
         />
         
         <EditarUsuarioModal
             show={showEditarModal}
             onHide={handleCloseEditarModal}
             usuario={selectedUsuario}
+            onUsuarioUpdated={handleUsuarioUpdated}
         />
 
         <ConfigurarPermisosModal
             show={showPermisosModal}
             onHide={handleClosePermisosModal}
+            onPermissionsUpdated={() => console.log('Permisos actualizados')}
         />
         </>
     );
