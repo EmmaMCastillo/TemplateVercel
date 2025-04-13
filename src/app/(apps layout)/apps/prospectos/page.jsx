@@ -8,9 +8,10 @@ import VerProspectoModal from './VerProspectoModal';
 import EditarProspectoModal from './EditarProspectoModal';
 import { createClient } from '@supabase/supabase-js';
 
+// Crear cliente de Supabase con valores directos
 const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    'https://ljkqmizvyhlsfiqmpubr.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxqa3FtaXp2eWhsc2ZpcW1wdWJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2NTE4NzEsImV4cCI6MjA1OTIyNzg3MX0.P25CoZR3XGsXv0I3E_QMbFsTO-GmJoLsZfxblADhTRs'
 );
 
 const ProspectosPage = () => {
@@ -58,6 +59,60 @@ const ProspectosPage = () => {
         prospecto.celular?.includes(searchTerm) ||
         prospecto.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    // Función para abrir WhatsApp con un resumen del prospecto
+    const openWhatsApp = (prospecto) => {
+        // Verificar que el número de teléfono existe
+        if (!prospecto.celular) {
+            alert('El prospecto no tiene un número de teléfono válido');
+            return;
+        }
+        
+        // Formatear el número de teléfono para la URL de WhatsApp
+        let phoneNumber = prospecto.celular;
+        
+        // Eliminar todos los caracteres no numéricos excepto el signo +
+        phoneNumber = phoneNumber.replace(/[^\d+]/g, '');
+        
+        // Si el número comienza con "+", eliminarlo para la URL
+        if (phoneNumber.startsWith('+')) {
+            phoneNumber = phoneNumber.substring(1);
+        }
+        
+        // Asegurarse de que el número tenga al menos 10 dígitos
+        if (phoneNumber.length < 10) {
+            alert('El número de teléfono no tiene el formato correcto. Debe tener al menos 10 dígitos incluyendo el código de país.');
+            return;
+        }
+        
+        console.log('Número para WhatsApp:', phoneNumber);
+        
+        // Crear un resumen del prospecto
+        const message = `
+*Resumen del Prospecto*
+------------------------
+*Nombre:* ${prospecto.nombre || 'N/A'}
+*Cédula/RUC:* ${prospecto.cedula || 'N/A'}
+*Email:* ${prospecto.email || 'N/A'}
+*Teléfono:* ${prospecto.celular || 'N/A'}
+*Origen:* ${prospecto.origen || 'N/A'}
+*Dirección:* ${prospecto.ubicacion || 'N/A'}
+*Fecha de registro:* ${new Date(prospecto.created_at).toLocaleDateString('es-ES') || 'N/A'}
+*Estado:* ${prospecto.estado || 'Activo'}
+------------------------
+`.trim();
+        
+        // Codificar el mensaje para URL
+        const encodedMessage = encodeURIComponent(message);
+        
+        // Crear el enlace de WhatsApp
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+        
+        console.log('URL de WhatsApp:', whatsappUrl);
+        
+        // Abrir WhatsApp en una nueva ventana
+        window.open(whatsappUrl, '_blank');
+    };
 
     return (
         <>
@@ -192,6 +247,18 @@ const ProspectosPage = () => {
                                                                     <span className="feather-icon">
                                                                         <FileText size={18} />
                                                                     </span>
+                                                                </span>
+                                                            </Button>
+                                                            {/* Botón de WhatsApp */}
+                                                            <Button
+                                                                variant="flush-success"
+                                                                size="sm"
+                                                                className="btn-icon btn-rounded flush-soft-hover"
+                                                                onClick={() => openWhatsApp(prospecto)}
+                                                                title="Contactar por WhatsApp"
+                                                            >
+                                                                <span className="icon">
+                                                                    <i className="bi bi-whatsapp" style={{ fontSize: '18px', color: '#25D366' }}></i>
                                                                 </span>
                                                             </Button>
                                                         </div>
