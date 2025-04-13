@@ -27,6 +27,7 @@
     "@tinymce/tinymce-react": "^5.1.1",
     "animate.css": "^4.1.1",
     "apexcharts": "^4.0.0",
+    "aws-sdk": "^2.1692.0",
     "bootstrap": "^5.3.3",
     "bootstrap-daterangepicker": "^3.1.0",
     "bootstrap-icons": "^1.11.3",

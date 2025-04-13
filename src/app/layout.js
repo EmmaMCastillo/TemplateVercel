@@ -1,5 +1,6 @@
 import { DM_Sans } from 'next/font/google'
 import { GlobalStateProvider } from '@/context/GolobalStateProvider';
+import { AuthProvider } from '@/context/AuthContext';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'react-perfect-scrollbar/dist/css/styles.css';
 import '@/styles/scss/style.scss';
@@ -27,7 +28,9 @@ export default function RootLayout({ children }) {
     <html lang="en" className={`${dm_sans.variable}`}>
       <body>
         <GlobalStateProvider>
-          {children}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
         </GlobalStateProvider>
       </body>
     </html>

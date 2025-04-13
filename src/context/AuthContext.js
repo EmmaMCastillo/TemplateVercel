@@ -1,0 +1,209 @@
+'use client';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
+import { useRouter } from 'next/navigation';
+
+// URL y claves de Supabase
+const supabaseUrl = 'https://ljkqmizvyhlsfiqmpubr.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxqa3FtaXp2eWhsc2ZpcW1wdWJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2NTE4NzEsImV4cCI6MjA1OTIyNzg3MX0.P25CoZR3XGsXv0I3E_QMbFsTO-GmJoLsZfxblADhTRs';
+
+// Crear cliente de Supabase
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Crear contexto de autenticación
+const AuthContext = createContext();
+
+export function AuthProvider({ children }) {
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const router = useRouter();
+
+    useEffect(() => {
+        // Verificar si hay una sesión activa
+        const checkSession = async () => {
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                
+                if (error) {
+                    console.error('Error al verificar sesión:', error);
+                    setUser(null);
+                } else if (session) {
+                    // Obtener datos del usuario
+                    const { data: userData, error: userError } = await supabase.auth.getUser();
+                    
+                    if (userError) {
+                        console.error('Error al obtener datos del usuario:', userError);
+                        setUser(null);
+                    } else {
+                        setUser(userData.user);
+                    }
+                } else {
+                    setUser(null);
+                }
+            } catch (err) {
+                console.error('Error general al verificar sesión:', err);
+                setUser(null);
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        checkSession();
+        
+        // Suscribirse a cambios en la autenticación
+        const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+            console.log('Evento de autenticación:', event);
+            
+            if (session) {
+                const { data: userData } = await supabase.auth.getUser();
+                setUser(userData.user);
+            } else {
+                setUser(null);
+            }
+            
+            setLoading(false);
+        });
+        
+        // Limpiar suscripción al desmontar
+        return () => {
+            authListener.subscription.unsubscribe();
+        };
+    }, []);
+
+    // Función para iniciar sesión
+    const signIn = async (email, password) => {
+        try {
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+            
+            if (error) {
+                throw error;
+            }
+            
+            return { success: true, data };
+        } catch (err) {
+            console.error('Error al iniciar sesión:', err);
+            return { success: false, error: err.message };
+        }
+    };
+
+    // Función para cerrar sesión
+    const signOut = async () => {
+        try {
+            const { error } = await supabase.auth.signOut();
+            
+            if (error) {
+                throw error;
+            }
+            
+            router.push('/auth/login/classic');
+            return { success: true };
+        } catch (err) {
+            console.error('Error al cerrar sesión:', err);
+            return { success: false, error: err.message };
+        }
+    };
+
+    // Función para restablecer contraseña
+    const resetPassword = async (email) => {
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: `${window.location.origin}/auth/update-password`,
+            });
+            
+            if (error) {
+                throw error;
+            }
+            
+            return { success: true };
+        } catch (err) {
+            console.error('Error al restablecer contraseña:', err);
+            return { success: false, error: err.message };
+        }
+    };
+
+    // Función para actualizar contraseña
+    const updatePassword = async (password) => {
+        try {
+            const { error } = await supabase.auth.updateUser({
+                password,
+            });
+            
+            if (error) {
+                throw error;
+            }
+            
+            return { success: true };
+        } catch (err) {
+            console.error('Error al actualizar contraseña:', err);
+            return { success: false, error: err.message };
+        }
+    };
+
+    // Función para verificar si el usuario tiene un permiso específico
+    const hasPermission = async (moduleId, actionId = null, requiredLevel = 'read') => {
+        if (!user) return false;
+        
+        try {
+            const rol = user.user_metadata?.rol || 'usuario';
+            
+            // Obtener permisos del rol del usuario
+            const { data, error } = await supabase
+                .from('roles_permisos')
+                .select('permisos')
+                .eq('rol_id', rol)
+                .single();
+            
+            if (error || !data) {
+                console.error('Error al obtener permisos:', error);
+                return false;
+            }
+            
+            const permisos = data.permisos;
+            
+            // Si es administrador, tiene todos los permisos
+            if (rol === 'admin') {
+                return true;
+            }
+            
+            // Verificar permiso específico
+            const permissionKey = actionId ? `${moduleId}_${actionId}` : moduleId;
+            const permission = permisos[permissionKey];
+            
+            if (!permission) {
+                return false;
+            }
+            
+            // Verificar nivel de acceso
+            const accessLevels = {
+                'no_access': 0,
+                'read': 1,
+                'write': 2,
+                'admin': 3
+            };
+            
+            return accessLevels[permission.access] >= accessLevels[requiredLevel];
+        } catch (err) {
+            console.error('Error al verificar permisos:', err);
+            return false;
+        }
+    };
+
+    const value = {
+        user,
+        loading,
+        signIn,
+        signOut,
+        resetPassword,
+        updatePassword,
+        hasPermission
+    };
+
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth() {
+    return useContext(AuthContext);
+}

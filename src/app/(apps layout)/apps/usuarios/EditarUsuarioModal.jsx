@@ -3,10 +3,34 @@ import React, { useState, useEffect } from 'react';
 import { Button, Col, Form, Modal, Row, Spinner, Alert } from 'react-bootstrap';
 import { createClient } from '@supabase/supabase-js';
 
+// URL y claves de Supabase
+const supabaseUrl = 'https://ljkqmizvyhlsfiqmpubr.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxqa3FtaXp2eWhsc2ZpcW1wdWJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2NTE4NzEsImV4cCI6MjA1OTIyNzg3MX0.P25CoZR3XGsXv0I3E_QMbFsTO-GmJoLsZfxblADhTRs';
+const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxqa3FtaXp2eWhsc2ZpcW1wdWJyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MzY1MTg3MSwiZXhwIjoyMDU5MjI3ODcxfQ.DpOblFmGSBjQzsyiH9QvESlnsavFi3F29YUZOOnrEu8';
+
 // Crear cliente de Supabase
 const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    supabaseUrl,
+    supabaseAnonKey,
+    {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
+        }
+    }
+);
+
+// Cliente de Supabase con clave de servicio para operaciones administrativas
+// Nota: En producción, esto debería manejarse solo en el servidor
+const supabaseAdmin = createClient(
+    supabaseUrl,
+    supabaseServiceKey,
+    {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
+        }
+    }
 );
 
 const EditarUsuarioModal = ({ show, onHide, usuario, onUsuarioUpdated }) => {
@@ -24,10 +48,10 @@ const EditarUsuarioModal = ({ show, onHide, usuario, onUsuarioUpdated }) => {
     useEffect(() => {
         if (usuario) {
             setFormData({
-                nombre: usuario.nombre || '',
+                nombre: usuario.user_metadata?.nombre || usuario.nombre || '',
                 email: usuario.email || '',
                 password: '',
-                rol: usuario.rol || 'usuario'
+                rol: usuario.user_metadata?.rol || usuario.rol || 'usuario'
             });
             setChangePassword(false);
         }
@@ -65,37 +89,38 @@ const EditarUsuarioModal = ({ show, onHide, usuario, onUsuarioUpdated }) => {
                 throw new Error('La contraseña es obligatoria si desea cambiarla');
             }
             
-            // Preparar datos para actualizar en la base de datos
-            const usuarioActualizado = {
-                nombre: formData.nombre,
+            // Actualizar usuario en Supabase Auth
+            const updateData = {
                 email: formData.email,
-                rol: formData.rol
+                user_metadata: {
+                    nombre: formData.nombre,
+                    rol: formData.rol
+                }
             };
             
             // Incluir contraseña solo si se va a cambiar
             if (changePassword && formData.password.trim()) {
-                usuarioActualizado.password = formData.password;
+                updateData.password = formData.password;
             }
             
-            // Actualizar en Supabase
-            const { data, error: supabaseError } = await supabase
-                .from('usuarios')
-                .update(usuarioActualizado)
-                .eq('id', usuario.id)
-                .select();
+            // Actualizar usuario usando la API de administrador
+            const { data: authData, error: authError } = await supabaseAdmin.auth.admin.updateUserById(
+                usuario.id,
+                updateData
+            );
             
-            if (supabaseError) {
-                throw new Error(`Error al actualizar el usuario: ${supabaseError.message}`);
+            if (authError) {
+                throw new Error(`Error al actualizar el usuario: ${authError.message}`);
             }
             
-            console.log('Usuario actualizado exitosamente:', data);
+            console.log('Usuario actualizado exitosamente:', authData);
             
             // Mostrar mensaje de éxito
             setSuccess(true);
             
             // Notificar al componente padre para actualizar la lista
             if (onUsuarioUpdated && typeof onUsuarioUpdated === 'function') {
-                onUsuarioUpdated(data[0]);
+                onUsuarioUpdated(authData.user);
             }
             
             // Cerrar modal después de un tiempo

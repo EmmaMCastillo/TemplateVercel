@@ -5,10 +5,28 @@ import { X } from 'tabler-icons-react';
 import './PermisosStyles.css';
 import { createClient } from '@supabase/supabase-js';
 
+// URL y claves de Supabase
+const supabaseUrl = 'https://ljkqmizvyhlsfiqmpubr.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxqa3FtaXp2eWhsc2ZpcW1wdWJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2NTE4NzEsImV4cCI6MjA1OTIyNzg3MX0.P25CoZR3XGsXv0I3E_QMbFsTO-GmJoLsZfxblADhTRs';
+const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxqa3FtaXp2eWhsc2ZpcW1wdWJyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MzY1MTg3MSwiZXhwIjoyMDU5MjI3ODcxfQ.DpOblFmGSBjQzsyiH9QvESlnsavFi3F29YUZOOnrEu8';
+
 // Crear cliente de Supabase
 const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    supabaseUrl,
+    supabaseAnonKey
+);
+
+// Cliente de Supabase con clave de servicio para operaciones administrativas
+// Nota: En producción, esto debería manejarse solo en el servidor
+const supabaseAdmin = createClient(
+    supabaseUrl,
+    supabaseServiceKey,
+    {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
+        }
+    }
 );
 
 // Definición de todos los módulos y sus acciones
@@ -68,62 +86,89 @@ const accessLevels = [
     { id: 'admin', name: 'Administrador', class: 'color-admin' }
 ];
 
-const ConfigurarPermisosModal = ({ show, onHide, onPermissionsUpdated }) => {
-    const [selectedRole, setSelectedRole] = useState('admin');
+const ConfigurarPermisosModal = ({ show, onHide, usuario, onPermissionsUpdated }) => {
     const [permissions, setPermissions] = useState({});
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
-    const [roles, setRoles] = useState([
-        { id: 'admin', name: 'Administrador' },
-        { id: 'ejecutivo', name: 'Ejecutivos' },
-        { id: 'comisionista', name: 'Comisionistas' },
-        { id: 'operaciones', name: 'Operaciones' },
-        { id: 'llamadas', name: 'Llamadas' },
-        { id: 'comercial', name: 'Comercial' },
-        { id: 'coordinador-operaciones', name: 'Coordinador de Operaciones' },
-        { id: 'coordinador-llamadas', name: 'Coordinador de Llamadas' },
-        { id: 'coordinador-comercial', name: 'Coordinador Comercial' }
-    ]);
+    const [roles, setRoles] = useState([]);
 
-    // Cargar permisos cuando cambia el rol seleccionado
+    // Cargar roles disponibles
     useEffect(() => {
-        if (show) {
-            loadPermissions(selectedRole);
-        }
-    }, [show, selectedRole]);
+        const fetchRoles = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('roles_permisos')
+                    .select('rol_id');
+                
+                if (error) {
+                    console.error('Error al cargar roles:', error);
+                    return;
+                }
+                
+                // Extraer los IDs de rol y crear objetos de rol
+                const rolesData = data.map(item => ({
+                    id: item.rol_id,
+                    name: item.rol_id.charAt(0).toUpperCase() + item.rol_id.slice(1) // Capitalizar
+                }));
+                
+                // Asegurarse de que siempre exista el rol 'admin'
+                if (!rolesData.some(role => role.id === 'admin')) {
+                    rolesData.push({ id: 'admin', name: 'Administrador' });
+                }
+                
+                setRoles(rolesData);
+            } catch (err) {
+                console.error('Error al cargar roles:', err);
+            }
+        };
+        
+        fetchRoles();
+    }, []);
 
-    // Función para cargar los permisos del rol seleccionado
-    const loadPermissions = async (roleId) => {
+    // Cargar permisos cuando se abre el modal y hay un usuario seleccionado
+    useEffect(() => {
+        if (show && usuario) {
+            loadPermissions();
+        }
+    }, [show, usuario]);
+
+    // Función para cargar los permisos del usuario seleccionado
+    const loadPermissions = async () => {
+        if (!usuario) return;
+        
         setLoading(true);
         setError(null);
         
         try {
-            // Generar permisos por defecto para cada módulo y acción
-            const defaultPermissions = {};
+            const rol = usuario.user_metadata?.rol || 'usuario';
             
-            Object.keys(modulesDefinition).forEach(moduleId => {
-                defaultPermissions[moduleId] = { access: roleId === 'admin' ? 'admin' : 'read' };
-                
-                modulesDefinition[moduleId].actions.forEach(action => {
-                    defaultPermissions[`${moduleId}_${action.id}`] = { 
-                        access: roleId === 'admin' ? 'admin' : 
-                                (action.id.startsWith('ver_') ? 'read' : 'no_access') 
-                    };
-                });
-            });
-            
-            // Intentar cargar permisos desde la base de datos
+            // Obtener permisos del rol del usuario
             const { data, error } = await supabase
                 .from('roles_permisos')
                 .select('permisos')
-                .eq('rol_id', roleId)
+                .eq('rol_id', rol)
                 .single();
             
             if (data && !error) {
                 console.log('Permisos cargados desde la base de datos:', data.permisos);
                 setPermissions(data.permisos);
             } else {
+                // Si no hay permisos definidos para este rol, crear permisos por defecto
+                const defaultPermissions = {};
+                
+                // Generar permisos por defecto para cada módulo y acción
+                Object.keys(modulesDefinition).forEach(moduleId => {
+                    defaultPermissions[moduleId] = { access: rol === 'admin' ? 'admin' : 'read' };
+                    
+                    modulesDefinition[moduleId].actions.forEach(action => {
+                        defaultPermissions[`${moduleId}_${action.id}`] = { 
+                            access: rol === 'admin' ? 'admin' : 
+                                    (action.id.startsWith('ver_') ? 'read' : 'no_access') 
+                        };
+                    });
+                });
+                
                 console.log('Usando permisos por defecto:', defaultPermissions);
                 setPermissions(defaultPermissions);
             }
@@ -133,11 +178,6 @@ const ConfigurarPermisosModal = ({ show, onHide, onPermissionsUpdated }) => {
         } finally {
             setLoading(false);
         }
-    };
-
-    // Función para manejar el cambio de rol
-    const handleRoleChange = (e) => {
-        setSelectedRole(e.target.value);
     };
 
     // Función para manejar el cambio de permiso individual
@@ -168,26 +208,33 @@ const ConfigurarPermisosModal = ({ show, onHide, onPermissionsUpdated }) => {
 
     // Función para guardar los permisos
     const handleSavePermissions = async () => {
+        if (!usuario) {
+            setError('No se ha seleccionado ningún usuario');
+            return;
+        }
+        
         setLoading(true);
         setError(null);
         setSuccess(false);
         
         try {
+            const rol = usuario.user_metadata?.rol || 'usuario';
+            
             // Verificar si ya existe un registro para este rol
-            const { data: existingData, error: checkError } = await supabase
+            const { data: existingRole, error: checkError } = await supabase
                 .from('roles_permisos')
                 .select('id')
-                .eq('rol_id', selectedRole)
+                .eq('rol_id', rol)
                 .single();
             
             let result;
             
-            if (existingData && !checkError) {
+            if (existingRole && !checkError) {
                 // Actualizar el registro existente
                 const { data, error } = await supabase
                     .from('roles_permisos')
                     .update({ permisos: permissions })
-                    .eq('id', existingData.id)
+                    .eq('id', existingRole.id)
                     .select();
                 
                 result = { data, error };
@@ -197,7 +244,7 @@ const ConfigurarPermisosModal = ({ show, onHide, onPermissionsUpdated }) => {
                     .from('roles_permisos')
                     .insert([
                         {
-                            rol_id: selectedRole,
+                            rol_id: rol,
                             permisos: permissions
                         }
                     ])
@@ -230,14 +277,33 @@ const ConfigurarPermisosModal = ({ show, onHide, onPermissionsUpdated }) => {
         }
     };
 
+    if (!usuario) {
+        return (
+            <Modal show={show} onHide={onHide} size="xl" centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Configurar Permisos</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <p>No se ha seleccionado ningún usuario para configurar permisos.</p>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={onHide}>
+                        Cerrar
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+        );
+    }
+
     return (
         <Modal show={show} onHide={onHide} size="xl" centered className="permisos-modal">
             <Modal.Header closeButton>
-                <Modal.Title>Configurar Permisos</Modal.Title>
+                <Modal.Title>Configurar Permisos - {usuario.user_metadata?.nombre || usuario.email}</Modal.Title>
             </Modal.Header>
             
             <div className="modal-description">
-                Aquí puedes configurar los permisos para los diferentes roles de usuarios.
+                Aquí puedes configurar los permisos para el rol {usuario.user_metadata?.rol || 'usuario'}.
+                Todos los usuarios con este rol tendrán los mismos permisos.
             </div>
             
             <Modal.Body>
@@ -254,18 +320,8 @@ const ConfigurarPermisosModal = ({ show, onHide, onPermissionsUpdated }) => {
                 )}
                 
                 <div className="permissions-controls">
-                    <div className="role-selector">
-                        <Form.Label htmlFor="role-select">Rol:</Form.Label>
-                        <Form.Select 
-                            id="role-select" 
-                            value={selectedRole} 
-                            onChange={handleRoleChange}
-                            disabled={loading}
-                        >
-                            {roles.map(role => (
-                                <option key={role.id} value={role.id}>{role.name}</option>
-                            ))}
-                        </Form.Select>
+                    <div className="role-info">
+                        <h6>Rol: {usuario.user_metadata?.rol || 'usuario'}</h6>
                     </div>
                     
                     <div className="permission-legend">

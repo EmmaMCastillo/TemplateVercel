@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Button, Card, Col, Container, Form, InputGroup, Row, Table, Spinner } from 'react-bootstrap';
+import { Button, Card, Col, Container, Form, InputGroup, Row, Table, Spinner, Alert } from 'react-bootstrap';
 import { Edit, Filter, Plus, Search, Trash, Adjustments } from 'tabler-icons-react';
 import HkBadge from '@/components/@hk-badge/@hk-badge';
 import NuevoUsuarioModal from './NuevoUsuarioModal';
@@ -8,10 +8,22 @@ import EditarUsuarioModal from './EditarUsuarioModal';
 import ConfigurarPermisosModal from './ConfigurarPermisosModal';
 import { createClient } from '@supabase/supabase-js';
 
-// Crear cliente de Supabase
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+// URL y claves de Supabase
+const supabaseUrl = 'https://ljkqmizvyhlsfiqmpubr.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxqa3FtaXp2eWhsc2ZpcW1wdWJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2NTE4NzEsImV4cCI6MjA1OTIyNzg3MX0.P25CoZR3XGsXv0I3E_QMbFsTO-GmJoLsZfxblADhTRs';
+const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxqa3FtaXp2eWhsc2ZpcW1wdWJyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MzY1MTg3MSwiZXhwIjoyMDU5MjI3ODcxfQ.DpOblFmGSBjQzsyiH9QvESlnsavFi3F29YUZOOnrEu8';
+
+// Crear cliente de Supabase con clave de servicio para operaciones administrativas
+// Nota: En producción, esto debería manejarse solo en el servidor
+const supabaseAdmin = createClient(
+    supabaseUrl,
+    supabaseServiceKey,
+    {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
+        }
+    }
 );
 
 const UsuariosPage = () => {
@@ -29,22 +41,23 @@ const UsuariosPage = () => {
         fetchUsuarios();
     }, []);
 
-    // Función para cargar usuarios desde la base de datos
+    // Función para cargar usuarios desde Supabase Auth
     const fetchUsuarios = async () => {
         try {
             setLoading(true);
-            const { data, error } = await supabase
-                .from('usuarios')
-                .select('*');
             
-            if (error) {
-                console.error('Error al cargar usuarios:', error);
-                setError(`Error al cargar usuarios: ${error.message || 'Error desconocido'}`);
-            } else {
-                console.log('Usuarios cargados:', data?.length || 0);
-                setUsuarios(data || []);
-                setError(null);
+            // Obtener usuarios de Supabase Auth
+            const { data: { users }, error: authError } = await supabaseAdmin.auth.admin.listUsers();
+            
+            if (authError) {
+                console.error('Error al cargar usuarios:', authError);
+                setError(`Error al cargar usuarios: ${authError.message || 'Error desconocido'}`);
+                return;
             }
+            
+            console.log('Usuarios cargados:', users?.length || 0);
+            setUsuarios(users || []);
+            setError(null);
         } catch (err) {
             console.error('Error general al cargar usuarios:', err);
             setError(`Error al cargar usuarios: ${err.message || 'Error desconocido'}`);
@@ -55,7 +68,7 @@ const UsuariosPage = () => {
 
     // Filtrar usuarios según el término de búsqueda
     const filteredUsuarios = usuarios.filter(usuario => 
-        usuario.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        usuario.user_metadata?.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         usuario.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -68,7 +81,10 @@ const UsuariosPage = () => {
     };
     const handleCloseEditarModal = () => setShowEditarModal(false);
 
-    const handleOpenPermisosModal = () => setShowPermisosModal(true);
+    const handleOpenPermisosModal = (usuario) => {
+        setSelectedUsuario(usuario);
+        setShowPermisosModal(true);
+    };
     const handleClosePermisosModal = () => setShowPermisosModal(false);
 
     // Función para manejar la creación de un nuevo usuario
@@ -93,19 +109,20 @@ const UsuariosPage = () => {
         
         try {
             setLoading(true);
-            const { error } = await supabase
-                .from('usuarios')
-                .delete()
-                .eq('id', usuarioId);
             
-            if (error) {
-                console.error('Error al eliminar usuario:', error);
-                alert(`Error al eliminar usuario: ${error.message || 'Error desconocido'}`);
-            } else {
-                console.log('Usuario eliminado exitosamente');
-                // Actualizar la lista de usuarios
-                fetchUsuarios();
+            // Eliminar usuario de Supabase Auth
+            const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(usuarioId);
+            
+            if (authError) {
+                console.error('Error al eliminar usuario:', authError);
+                alert(`Error al eliminar usuario: ${authError.message || 'Error desconocido'}`);
+                return;
             }
+            
+            console.log('Usuario eliminado exitosamente');
+            
+            // Actualizar la lista de usuarios
+            fetchUsuarios();
         } catch (err) {
             console.error('Error general al eliminar usuario:', err);
             alert(`Error al eliminar usuario: ${err.message || 'Error desconocido'}`);
@@ -179,13 +196,14 @@ const UsuariosPage = () => {
                                             <th>NOMBRE</th>
                                             <th>EMAIL</th>
                                             <th>ROL</th>
+                                            <th>ESTADO</th>
                                             <th className="text-center">ACCIONES</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {loading ? (
                                             <tr>
-                                                <td colSpan="4" className="text-center py-4">
+                                                <td colSpan="5" className="text-center py-4">
                                                     <Spinner animation="border" role="status">
                                                         <span className="visually-hidden">Cargando...</span>
                                                     </Spinner>
@@ -193,16 +211,21 @@ const UsuariosPage = () => {
                                             </tr>
                                         ) : filteredUsuarios.length === 0 ? (
                                             <tr>
-                                                <td colSpan="4" className="text-center">No se encontraron usuarios</td>
+                                                <td colSpan="5" className="text-center">No se encontraron usuarios</td>
                                             </tr>
                                         ) : (
                                             filteredUsuarios.map((usuario) => (
                                                 <tr key={usuario.id}>
-                                                    <td>{usuario.nombre}</td>
+                                                    <td>{usuario.user_metadata?.nombre || 'Sin nombre'}</td>
                                                     <td>{usuario.email}</td>
                                                     <td>
                                                         <HkBadge bg="success" soft>
-                                                            {usuario.rol || 'Usuario'}
+                                                            {usuario.user_metadata?.rol || 'Usuario'}
+                                                        </HkBadge>
+                                                    </td>
+                                                    <td>
+                                                        <HkBadge bg={usuario.email_confirmed_at ? "success" : "warning"} soft>
+                                                            {usuario.email_confirmed_at ? 'Confirmado' : 'Pendiente'}
                                                         </HkBadge>
                                                     </td>
                                                     <td>
@@ -223,7 +246,7 @@ const UsuariosPage = () => {
                                                                 variant="flush-dark"
                                                                 size="sm"
                                                                 className="btn-icon btn-rounded flush-soft-hover"
-                                                                onClick={handleOpenPermisosModal}
+                                                                onClick={() => handleOpenPermisosModal(usuario)}
                                                             >
                                                                 <span className="icon">
                                                                     <span className="feather-icon">
@@ -274,7 +297,8 @@ const UsuariosPage = () => {
         <ConfigurarPermisosModal
             show={showPermisosModal}
             onHide={handleClosePermisosModal}
-            onPermissionsUpdated={() => console.log('Permisos actualizados')}
+            usuario={selectedUsuario}
+            onPermissionsUpdated={() => fetchUsuarios()}
         />
         </>
     );
