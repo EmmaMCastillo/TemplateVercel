@@ -1,152 +1,140 @@
 /* Estilos para el modal de permisos */
-.permisos-modal .modal-dialog {
-    max-width: 1000px;
-}
-
 .permisos-modal .modal-description {
-    padding: 1rem 1.5rem;
-    font-size: 0.875rem;
-    color: #6b7280;
-    border-bottom: 1px solid #e5e7eb;
+    padding: 0 1.5rem;
+    margin-bottom: 1rem;
+    color: #6c757d;
+    font-size: 0.9rem;
 }
 
-/* Controles específicos para permisos */
-.permissions-controls {
+.permisos-modal .permissions-controls {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.5rem;
+    padding: 0 1rem;
 }
 
-.role-selector {
+.permisos-modal .role-info {
     display: flex;
-    gap: 0.5rem;
     align-items: center;
 }
 
-.role-selector label {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #374151;
-}
-
-.permission-legend {
+.permisos-modal .permission-legend {
     display: flex;
-    gap: 1.5rem;
+    gap: 1rem;
 }
 
-.legend-item {
+.permisos-modal .legend-item {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 0.75rem;
-    color: #6b7280;
+    font-size: 0.8rem;
 }
 
-.legend-color {
-    width: 12px;
-    height: 12px;
-    border-radius: 2px;
-}
-
-.color-no-access {
-    background-color: #e5e7eb;
-}
-
-.color-read {
-    background-color: #93c5fd;
-}
-
-.color-write {
-    background-color: #fcd34d;
-}
-
-.color-admin {
-    background-color: #34d399;
-}
-
-/* Tabla de permisos */
-.permissions-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.875rem;
-}
-
-.permissions-table th,
-.permissions-table td {
-    padding: 0.75rem 1rem;
-    border: 1px solid #e5e7eb;
-}
-
-.permissions-table th {
-    background-color: #f9fafb;
-    text-align: left;
-    font-weight: 500;
-    color: #6b7280;
-}
-
-.permissions-table thead th {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    background-color: #f9fafb;
-}
-
-.permissions-table tbody th {
-    font-weight: 500;
-}
-
-.permission-module {
-    font-weight: 600;
-    color: #20b2aa;
-    background-color: rgba(32, 178, 170, 0.05);
-}
-
-.permission-subitem {
-    padding-left: 1.5rem;
-}
-
-.permission-action {
-    padding-left: 3rem;
-    color: #6b7280;
-}
-
-.permission-select {
-    display: flex;
-    justify-content: center;
-    gap: 0.5rem;
-}
-
-.permission-option {
+.permisos-modal .legend-color {
     width: 16px;
     height: 16px;
-    border-radius: 2px;
-    cursor: pointer;
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
 }
 
-.permission-option:hover {
+.permisos-modal .tab-container {
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+.permisos-modal .tabs {
+    display: flex;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.permisos-modal .tab {
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    font-weight: 500;
+    border-right: 1px solid #dee2e6;
+}
+
+.permisos-modal .tab.active {
+    background-color: #fff;
+    border-bottom: 2px solid #007bff;
+    margin-bottom: -1px;
+}
+
+.permisos-modal .tab-panel {
+    display: none;
+    padding: 1rem;
+}
+
+.permisos-modal .tab-panel.active {
+    display: block;
+}
+
+.permisos-modal .permissions-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.permisos-modal .permissions-table th,
+.permisos-modal .permissions-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.permisos-modal .permissions-table thead th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    text-align: left;
+}
+
+.permisos-modal .permission-module th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+}
+
+.permisos-modal .permission-subitem th {
+    font-weight: 400;
+    padding-left: 2rem;
+}
+
+.permisos-modal .permission-select {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.permisos-modal .permission-option {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid #dee2e6;
+    opacity: 0.5;
+    transition: all 0.2s ease;
+}
+
+.permisos-modal .permission-option:hover {
     opacity: 0.8;
 }
 
-.permission-option.selected {
-    box-shadow: 0 0 0 2px #20b2aa;
+.permisos-modal .permission-option.selected {
+    opacity: 1;
+    border: 2px solid #212529;
 }
 
-/* Tabs */
-.nav-tabs .nav-link {
-    color: #6b7280;
-    border-bottom: 2px solid transparent;
-    padding: 0.75rem 1.25rem;
-    font-size: 0.875rem;
-    font-weight: 500;
+/* Colores para los niveles de acceso */
+.permisos-modal .color-no-access {
+    background-color: #dc3545;
 }
 
-.nav-tabs .nav-link.active {
-    color: #20b2aa;
-    border-bottom-color: #20b2aa;
+.permisos-modal .color-read {
+    background-color: #ffc107;
 }
 
-.tab-content {
-    margin-top: 1.5rem;
+.permisos-modal .color-write {
+    background-color: #17a2b8;
+}
+
+.permisos-modal .color-admin {
+    background-color: #28a745;
 }

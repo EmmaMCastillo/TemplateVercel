@@ -3,10 +3,34 @@ import React, { useState } from 'react';
 import { Button, Col, Form, Modal, Row, Spinner, Alert } from 'react-bootstrap';
 import { createClient } from '@supabase/supabase-js';
 
+// URL y claves de Supabase
+const supabaseUrl = 'https://ljkqmizvyhlsfiqmpubr.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxqa3FtaXp2eWhsc2ZpcW1wdWJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2NTE4NzEsImV4cCI6MjA1OTIyNzg3MX0.P25CoZR3XGsXv0I3E_QMbFsTO-GmJoLsZfxblADhTRs';
+const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxqa3FtaXp2eWhsc2ZpcW1wdWJyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MzY1MTg3MSwiZXhwIjoyMDU5MjI3ODcxfQ.DpOblFmGSBjQzsyiH9QvESlnsavFi3F29YUZOOnrEu8';
+
 // Crear cliente de Supabase
 const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    supabaseUrl,
+    supabaseAnonKey,
+    {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
+        }
+    }
+);
+
+// Cliente de Supabase con clave de servicio para operaciones administrativas
+// Nota: En producción, esto debería manejarse solo en el servidor
+const supabaseAdmin = createClient(
+    supabaseUrl,
+    supabaseServiceKey,
+    {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
+        }
+    }
 );
 
 const NuevoUsuarioModal = ({ show, onHide, onUsuarioCreated }) => {
@@ -28,6 +52,16 @@ const NuevoUsuarioModal = ({ show, onHide, onUsuarioCreated }) => {
         });
     };
 
+    // Función para generar una contraseña aleatoria
+    const generateRandomPassword = () => {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
+        let password = '';
+        for (let i = 0; i < 12; i++) {
+            password += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return password;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -44,29 +78,60 @@ const NuevoUsuarioModal = ({ show, onHide, onUsuarioCreated }) => {
                 throw new Error('El email es obligatorio');
             }
             
-            if (!formData.password.trim()) {
-                throw new Error('La contraseña es obligatoria');
-            }
+            // Generar contraseña aleatoria si no se proporciona una
+            const password = formData.password.trim() || generateRandomPassword();
             
-            // Preparar datos para guardar en la base de datos
-            const nuevoUsuario = {
-                nombre: formData.nombre,
+            // Crear usuario en Supabase Auth usando la clave de servicio
+            const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
                 email: formData.email,
-                password: formData.password,
-                rol: formData.rol
-            };
+                password: password,
+                email_confirm: true, // Confirmar email automáticamente
+                user_metadata: {
+                    nombre: formData.nombre,
+                    rol: formData.rol
+                }
+            });
             
-            // Guardar en Supabase
-            const { data, error: supabaseError } = await supabase
-                .from('usuarios')
-                .insert([nuevoUsuario])
-                .select();
-            
-            if (supabaseError) {
-                throw new Error(`Error al guardar el usuario: ${supabaseError.message}`);
+            if (authError) {
+                throw new Error(`Error al crear el usuario: ${authError.message}`);
             }
             
-            console.log('Usuario guardado exitosamente:', data);
+            console.log('Usuario creado exitosamente en Auth:', authData);
+            
+            // Guardar información adicional en la tabla roles_permisos si es necesario
+            if (formData.rol) {
+                // Verificar si ya existe un registro para este rol
+                const { data: existingRole } = await supabase
+                    .from('roles_permisos')
+                    .select('id')
+                    .eq('rol_id', formData.rol)
+                    .single();
+                
+                if (!existingRole) {
+                    // Crear permisos por defecto para el rol si no existen
+                    await supabase
+                        .from('roles_permisos')
+                        .insert([
+                            {
+                                rol_id: formData.rol,
+                                permisos: {}
+                            }
+                        ]);
+                }
+            }
+            
+            // Enviar correo de bienvenida
+            await fetch('/api/auth/send-welcome-email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: formData.email,
+                    nombre: formData.nombre,
+                    temporaryPassword: !formData.password.trim() ? password : null
+                }),
+            });
             
             // Mostrar mensaje de éxito
             setSuccess(true);
@@ -81,7 +146,7 @@ const NuevoUsuarioModal = ({ show, onHide, onUsuarioCreated }) => {
             
             // Notificar al componente padre para actualizar la lista
             if (onUsuarioCreated && typeof onUsuarioCreated === 'function') {
-                onUsuarioCreated(data[0]);
+                onUsuarioCreated(authData.user);
             }
             
             // Cerrar modal después de un tiempo
@@ -89,8 +154,8 @@ const NuevoUsuarioModal = ({ show, onHide, onUsuarioCreated }) => {
                 if (success) onHide();
             }, 2000);
         } catch (err) {
-            console.error('Error al guardar el usuario:', err);
-            setError(err.message || 'Error al guardar el usuario. Por favor, intente de nuevo.');
+            console.error('Error al crear el usuario:', err);
+            setError(err.message || 'Error al crear el usuario. Por favor, intente de nuevo.');
         } finally {
             setLoading(false);
         }
@@ -111,7 +176,7 @@ const NuevoUsuarioModal = ({ show, onHide, onUsuarioCreated }) => {
                     
                     {success && (
                         <Alert variant="success" className="mb-3">
-                            Usuario creado exitosamente.
+                            Usuario creado exitosamente. Se ha enviado un correo de bienvenida.
                         </Alert>
                     )}
                     
@@ -141,16 +206,18 @@ const NuevoUsuarioModal = ({ show, onHide, onUsuarioCreated }) => {
                             />
                         </Col>
                         <Col sm={12} className="form-group mb-3">
-                            <Form.Label>Contraseña</Form.Label>
+                            <Form.Label>Contraseña (opcional)</Form.Label>
                             <Form.Control
                                 type="password"
                                 name="password"
                                 value={formData.password}
                                 onChange={handleChange}
-                                placeholder="Ingrese contraseña"
-                                required
+                                placeholder="Dejar en blanco para generar automáticamente"
                                 disabled={loading}
                             />
+                            <Form.Text className="text-muted">
+                                Si deja este campo en blanco, se generará una contraseña aleatoria y se enviará al usuario por correo electrónico.
+                            </Form.Text>
                         </Col>
                         <Col sm={12} className="form-group mb-3">
                             <Form.Label>Rol</Form.Label>

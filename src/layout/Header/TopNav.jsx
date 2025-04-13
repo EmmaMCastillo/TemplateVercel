@@ -3,11 +3,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import SimpleBar from 'simplebar-react';
 import { AlignLeft, Bell, Calendar, CheckSquare, Clock, CreditCard, Inbox, Plus, Search, Settings, Tag } from 'react-feather';
-import { Button, Container, Dropdown, Form, InputGroup, Nav, Navbar } from 'react-bootstrap';
+import { Button, Container, Dropdown, Form, InputGroup, Nav, Navbar, Spinner } from 'react-bootstrap';
 import classNames from 'classnames';
 import { motion } from 'framer-motion';
 import HkBadge from '@/components/@hk-badge/@hk-badge';
 import { useGlobalStateContext } from '@/context/GolobalStateProvider';
+import { useAuth } from '@/context/AuthContext';
 
 //Images
 import avatar2 from '@/assets/img/avatar2.jpg';
@@ -20,13 +21,26 @@ import avatar12 from '@/assets/img/avatar12.jpg';
 const TopNav = () => {
 
     const { states, dispatch } = useGlobalStateContext();
+    const { user, signOut, loading: authLoading } = useAuth();
     const [showDropdown, setShowDropdown] = useState(false);
-    const [searchValue, setSearchValue] = useState("")
+    const [searchValue, setSearchValue] = useState("");
+    const [signingOut, setSigningOut] = useState(false);
 
     const CloseSearchInput = () => {
         setSearchValue("");
         setShowDropdown(false);
     }
+
+    const handleSignOut = async () => {
+        setSigningOut(true);
+        try {
+            await signOut();
+        } catch (error) {
+            console.error('Error al cerrar sesión:', error);
+        } finally {
+            setSigningOut(false);
+        }
+    };
 
     const pageVariants = {
         initial: {
@@ -43,7 +57,10 @@ const TopNav = () => {
         }
     };
 
-
+    // Obtener el nombre y correo del usuario autenticado
+    const userName = user?.user_metadata?.nombre || 'Usuario';
+    const userEmail = user?.email || 'usuario@ejemplo.com';
+    const userRole = user?.user_metadata?.rol || 'usuario';
 
     return (
         <Navbar expand="xl" className="hk-navbar navbar-light fixed-top" >
@@ -361,97 +378,88 @@ const TopNav = () => {
                                         <div className="media">
                                             <div className="media-head me-2">
                                                 <div className="avatar avatar-primary avatar-sm avatar-rounded">
-                                                    <span className="initial-wrap">Hk</span>
+                                                    <span className="initial-wrap">{userName.charAt(0)}</span>
                                                 </div>
                                             </div>
                                             <div className="media-body">
                                                 <Dropdown>
-                                                    <Dropdown.Toggle as="a" href="#" className="d-block fw-medium text-dark">Hencework</Dropdown.Toggle>
+                                                    <Dropdown.Toggle as="a" href="#" className="d-block fw-medium text-dark">{userName}</Dropdown.Toggle>
                                                     <Dropdown.Menu align="end">
                                                         <div className="p-2">
                                                             <div className="media align-items-center active-user mb-3">
                                                                 <div className="media-head me-2">
                                                                     <div className="avatar avatar-primary avatar-xs avatar-rounded">
-                                                                        <span className="initial-wrap">Hk</span>
+                                                                        <span className="initial-wrap">{userName.charAt(0)}</span>
                                                                     </div>
                                                                 </div>
                                                                 <div className="media-body">
-                                                                    <Link href="#" className="d-flex link-dark">Hencework <i className="ri-checkbox-circle-fill fs-7 text-primary ms-1" />
+                                                                    <Link href="#" className="d-flex link-dark">{userName} <i className="ri-checkbox-circle-fill fs-7 text-primary ms-1" />
                                                                     </Link>
                                                                     <Link href="#" className="d-block fs-8 link-secondary">
-                                                                        <u>Manage your account</u>
+                                                                        <u>Gestionar tu cuenta</u>
                                                                     </Link>
                                                                 </div>
                                                             </div>
                                                             <div className="media align-items-center mb-3">
                                                                 <div className="media-head me-2">
                                                                     <div className="avatar avatar-xs avatar-rounded">
-                                                                        <Image src={avatar12} alt="user" className="avatar-img" />
+                                                                        <div className="avatar-icon avatar-soft-primary avatar-rounded">
+                                                                            <span className="initial-wrap">{userRole.charAt(0).toUpperCase()}</span>
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                                 <div className="media-body">
-                                                                    <Link href="#" className="d-block link-dark">Jampack Team</Link>
-                                                                    <Link href="#" className="d-block fs-8 link-secondary">contact@hencework.com</Link>
+                                                                    <Link href="#" className="d-block link-dark">Rol: {userRole}</Link>
+                                                                    <Link href="#" className="d-block fs-8 link-secondary">{userEmail}</Link>
                                                                 </div>
                                                             </div>
-                                                            <Button variant="outline-light" size="sm" className="btn-block">
-                                                                <span>
-                                                                    <span className="icon">
-                                                                        <span className="feather-icon">
-                                                                            <Plus />
-                                                                        </span>
-                                                                    </span>
-                                                                    <span>Add Account</span></span>
-                                                            </Button>
                                                         </div>
                                                     </Dropdown.Menu>
                                                 </Dropdown>
-                                                <div className="fs-7">contact@hencework.com</div>
-                                                <Link href="#" className="d-block fs-8 link-secondary">
-                                                    <u>Sign Out</u>
-                                                </Link>
+                                                <div className="fs-7">{userEmail}</div>
+                                                <Button 
+                                                    variant="link" 
+                                                    className="p-0 fs-8 link-secondary" 
+                                                    onClick={handleSignOut}
+                                                    disabled={signingOut}
+                                                >
+                                                    {signingOut ? (
+                                                        <>
+                                                            <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-1" />
+                                                            <u>Cerrando sesión...</u>
+                                                        </>
+                                                    ) : (
+                                                        <u>Cerrar sesión</u>
+                                                    )}
+                                                </Button>
                                             </div>
                                         </div>
                                     </div>
                                     <Dropdown.Divider as="div" />
-                                    <Dropdown.Item as={Link} href="/profile" >Profile</Dropdown.Item>
-                                    <Dropdown.Item>
-                                        <span className="me-2">Offers</span>
-                                        <span className="badge badge-sm badge-soft-pink">2</span>
-                                    </Dropdown.Item>
+                                    <Dropdown.Item as={Link} href="/profile" >Perfil</Dropdown.Item>
                                     <Dropdown.Divider as="div" />
-                                    <h6 className="dropdown-header">Manage Account</h6>
-                                    <Dropdown.Item>
-                                        <span className="dropdown-icon feather-icon">
-                                            <CreditCard />
-                                        </span>
-                                        <span>Payment methods</span>
-                                    </Dropdown.Item>
-                                    <Dropdown.Item>
-                                        <span className="dropdown-icon feather-icon">
-                                            <CheckSquare />
-                                        </span>
-                                        <span>Subscriptions</span>
-                                    </Dropdown.Item>
+                                    <h6 className="dropdown-header">Gestionar Cuenta</h6>
                                     <Dropdown.Item>
                                         <span className="dropdown-icon feather-icon">
                                             <Settings />
                                         </span>
-                                        <span>Settings</span>
+                                        <span>Configuración</span>
                                     </Dropdown.Item>
                                     <Dropdown.Divider as="div" />
-                                    <Dropdown.Item>
-                                        <span className="dropdown-icon feather-icon">
-                                            <Tag />
-                                        </span>
-                                        <span>Raise a ticket</span>
-                                    </Dropdown.Item>
-                                    <Dropdown.Divider as="div" />
-                                    <Dropdown.Item>
-                                        Terms &amp; Conditions
-                                    </Dropdown.Item>
-                                    <Dropdown.Item>
-                                        Help &amp; Support
+                                    <Dropdown.Item onClick={handleSignOut} disabled={signingOut}>
+                                        {signingOut ? (
+                                            <>
+                                                <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" className="me-2" />
+                                                <span>Cerrando sesión...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span className="dropdown-icon feather-icon">
+                                                    <i className="bi bi-box-arrow-right"></i>
+                                                </span>
+                                                <span>Cerrar sesión</span>
+                                            </>
+                                        )}
                                     </Dropdown.Item>
                                 </Dropdown.Menu>
                             </Dropdown>
