@@ -1,12 +1,12 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Button, Col, Form, Modal, Row, Spinner } from 'react-bootstrap';
+import { Button, Col, Form, Modal, Row, Spinner, InputGroup } from 'react-bootstrap';
 import { createClient } from '@supabase/supabase-js';
 
-// Crear cliente de Supabase
+// Crear cliente de Supabase con valores directos
 const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    'https://ljkqmizvyhlsfiqmpubr.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxqa3FtaXp2eWhsc2ZpcW1wdWJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2NTE4NzEsImV4cCI6MjA1OTIyNzg3MX0.P25CoZR3XGsXv0I3E_QMbFsTO-GmJoLsZfxblADhTRs'
 );
 
 const EditarProspectoModal = ({ show, onHide, prospecto, onProspectoUpdated }) => {
@@ -14,6 +14,7 @@ const EditarProspectoModal = ({ show, onHide, prospecto, onProspectoUpdated }) =
     const [formData, setFormData] = useState({
         nombre: '',
         cedula: '',
+        codigoPais: '+593', // Ecuador por defecto
         celular: '',
         email: '',
         ubicacion: '',
@@ -26,10 +27,35 @@ const EditarProspectoModal = ({ show, onHide, prospecto, onProspectoUpdated }) =
     // Actualizar el formulario cuando cambia el prospecto
     useEffect(() => {
         if (prospecto) {
+            // Extraer el código de país y el número de teléfono
+            let codigoPais = '+593'; // Valor por defecto
+            let celular = '';
+            
+            if (prospecto.celular) {
+                // Si el número ya tiene código de país, extraerlo
+                const codigosPais = ['+593', '+1', '+57', '+51', '+56', '+54', '+52', '+34'];
+                let encontrado = false;
+                
+                for (const codigo of codigosPais) {
+                    if (prospecto.celular.startsWith(codigo)) {
+                        codigoPais = codigo;
+                        celular = prospecto.celular.substring(codigo.length);
+                        encontrado = true;
+                        break;
+                    }
+                }
+                
+                // Si no se encontró un código de país, usar el número completo
+                if (!encontrado) {
+                    celular = prospecto.celular;
+                }
+            }
+            
             setFormData({
                 nombre: prospecto.nombre || '',
                 cedula: prospecto.cedula || '',
-                celular: prospecto.celular || '',
+                codigoPais: codigoPais,
+                celular: celular,
                 email: prospecto.email || '',
                 ubicacion: prospecto.ubicacion || '',
                 origen: prospecto.origen || '',
@@ -71,14 +97,30 @@ const EditarProspectoModal = ({ show, onHide, prospecto, onProspectoUpdated }) =
         setError(null);
         
         try {
+            // Validar campos obligatorios
+            if (!formData.nombre.trim()) {
+                throw new Error('El nombre es obligatorio');
+            }
+            
+            if (!formData.celular.trim()) {
+                throw new Error('El número de teléfono es obligatorio');
+            }
+            
+            // Formatear el número de teléfono con el código de país
+            // Eliminar cualquier 0 inicial del número
+            const numeroSinCero = formData.celular.replace(/^0+/, '');
+            const numeroCompleto = `${formData.codigoPais}${numeroSinCero}`;
+            
+            console.log('Guardando número de teléfono:', numeroCompleto);
+            
             // Preparar datos para actualizar en la base de datos
             const prospectoActualizado = {
                 nombre: formData.nombre,
                 cedula: formData.cedula,
-                celular: formData.celular,
+                celular: numeroCompleto, // Guardar con código de país
                 email: formData.email,
                 ubicacion: formData.ubicacion,
-                origen: formData.origen,
+                origen: formData.origen || 'Orgánico', // Valor por defecto
                 notas: formData.notas
             };
             
@@ -90,6 +132,7 @@ const EditarProspectoModal = ({ show, onHide, prospecto, onProspectoUpdated }) =
                 .select();
             
             if (supabaseError) {
+                console.error('Error de Supabase:', supabaseError);
                 throw new Error(`Error al actualizar el prospecto: ${supabaseError.message}`);
             }
             
@@ -151,15 +194,37 @@ const EditarProspectoModal = ({ show, onHide, prospecto, onProspectoUpdated }) =
                         </Col>
                         <Col sm={6} className="form-group mb-3">
                             <Form.Label>Teléfono</Form.Label>
-                            <Form.Control
-                                type="tel"
-                                name="celular"
-                                value={formData.celular}
-                                onChange={handleChange}
-                                placeholder="Ingrese número de teléfono"
-                                required
-                                disabled={loading}
-                            />
+                            <InputGroup>
+                                <Form.Select
+                                    name="codigoPais"
+                                    value={formData.codigoPais}
+                                    onChange={handleChange}
+                                    style={{ maxWidth: '120px' }}
+                                    required
+                                    disabled={loading}
+                                >
+                                    <option value="+593">🇪🇨 +593</option>
+                                    <option value="+1">🇺🇸 +1</option>
+                                    <option value="+57">🇨🇴 +57</option>
+                                    <option value="+51">🇵🇪 +51</option>
+                                    <option value="+56">🇨🇱 +56</option>
+                                    <option value="+54">🇦🇷 +54</option>
+                                    <option value="+52">🇲🇽 +52</option>
+                                    <option value="+34">🇪🇸 +34</option>
+                                </Form.Select>
+                                <Form.Control
+                                    type="tel"
+                                    name="celular"
+                                    value={formData.celular}
+                                    onChange={handleChange}
+                                    placeholder="Número sin 0 inicial"
+                                    required
+                                    disabled={loading}
+                                />
+                            </InputGroup>
+                            <Form.Text className="text-muted">
+                                Ingrese el número sin el 0 inicial. Ejemplo: 987654321
+                            </Form.Text>
                         </Col>
                     </Row>
                     <Row className="gx-3">
@@ -205,6 +270,10 @@ const EditarProspectoModal = ({ show, onHide, prospecto, onProspectoUpdated }) =
                                 <option value="Referido">Referido</option>
                                 <option value="Broker">Broker</option>
                                 <option value="Vitrina">Vitrina</option>
+                                <option value="Redes sociales">Redes sociales</option>
+                                <option value="Campaña email">Campaña email</option>
+                                <option value="Evento">Evento</option>
+                                <option value="Sitio web">Sitio web</option>
                             </Form.Select>
                         </Col>
                     </Row>

@@ -4,10 +4,10 @@ import { Button, Col, Modal, Row, Spinner } from 'react-bootstrap';
 import HkBadge from '@/components/@hk-badge/@hk-badge';
 import { createClient } from '@supabase/supabase-js';
 
-// Crear cliente de Supabase
+// Crear cliente de Supabase con valores directos
 const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    'https://ljkqmizvyhlsfiqmpubr.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxqa3FtaXp2eWhsc2ZpcW1wdWJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2NTE4NzEsImV4cCI6MjA1OTIyNzg3MX0.P25CoZR3XGsXv0I3E_QMbFsTO-GmJoLsZfxblADhTRs'
 );
 
 const VerProspectoModal = ({ show, onHide, prospecto }) => {
@@ -19,7 +19,7 @@ const VerProspectoModal = ({ show, onHide, prospecto }) => {
                     <Modal.Title>Detalles del Prospecto</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <p>No se ha seleccionado ningún prospecto.</p>
+                    <p>No se ha seleccionado ningún prospecto para ver.</p>
                 </Modal.Body>
                 <Modal.Footer>
                     <Button variant="secondary" onClick={onHide}>
@@ -30,36 +30,13 @@ const VerProspectoModal = ({ show, onHide, prospecto }) => {
         );
     }
 
-    // Función para formatear la fecha
-    const formatDate = (dateString) => {
-        if (!dateString) return 'N/A';
-        
-        try {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('es-ES', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        } catch (error) {
-            console.error('Error al formatear la fecha:', error);
-            return dateString;
-        }
-    };
-
     // Función para crear una solicitud a partir del prospecto
-    const handleCrearSolicitud = async () => {
+    const crearSolicitud = async () => {
         try {
-            // Aquí iría la lógica para crear una solicitud a partir del prospecto
-            // Por ahora, solo mostramos un mensaje en la consola
-            console.log('Crear solicitud para el prospecto:', prospecto);
-            
             // Redirigir a la página de solicitudes
             window.location.href = '/apps/solicitudes';
         } catch (error) {
-            console.error('Error al crear la solicitud:', error);
+            console.error('Error al redirigir:', error);
         }
     };
 
@@ -70,56 +47,47 @@ const VerProspectoModal = ({ show, onHide, prospecto }) => {
             </Modal.Header>
             <Modal.Body>
                 <Row className="mb-3">
-                    <Col xs={12} className="mb-3">
-                        <h5 className="mb-0">{prospecto.nombre || 'Sin nombre'}</h5>
+                    <Col sm={6}>
+                        <h5 className="mb-1">Información Personal</h5>
+                        <p className="mb-0"><strong>Nombre:</strong> {prospecto.nombre}</p>
+                        <p className="mb-0"><strong>Cédula/RUC:</strong> {prospecto.cedula}</p>
+                        <p className="mb-0"><strong>Teléfono:</strong> {prospecto.celular}</p>
+                        <p className="mb-0"><strong>Email:</strong> {prospecto.email}</p>
+                    </Col>
+                    <Col sm={6}>
+                        <h5 className="mb-1">Información Adicional</h5>
+                        <p className="mb-0"><strong>Ubicación:</strong> {prospecto.ubicacion || 'No especificada'}</p>
+                        <p className="mb-0"><strong>Origen:</strong> {prospecto.origen || 'No especificado'}</p>
+                        <p className="mb-0">
+                            <strong>Fecha de registro:</strong> {
+                                prospecto.created_at 
+                                ? new Date(prospecto.created_at).toLocaleDateString('es-ES') 
+                                : 'No disponible'
+                            }
+                        </p>
+                        <p className="mb-0">
+                            <strong>Estado:</strong> {
+                                <HkBadge bg="success" soft>
+                                    {prospecto.estado || 'Activo'}
+                                </HkBadge>
+                            }
+                        </p>
                     </Col>
                 </Row>
-                <Row className="mb-3">
-                    <Col xs={12} md={6} className="mb-3 mb-md-0">
-                        <div className="text-muted mb-1">Cédula/RUC</div>
-                        <div className="fw-medium">{prospecto.cedula || 'No disponible'}</div>
-                    </Col>
-                    <Col xs={12} md={6}>
-                        <div className="text-muted mb-1">Teléfono</div>
-                        <div className="fw-medium">{prospecto.celular || 'No disponible'}</div>
-                    </Col>
-                </Row>
-                <Row className="mb-3">
-                    <Col xs={12}>
-                        <div className="text-muted mb-1">Email</div>
-                        <div className="fw-medium">{prospecto.email || 'No disponible'}</div>
-                    </Col>
-                </Row>
-                <Row className="mb-3">
-                    <Col xs={12} md={6} className="mb-3 mb-md-0">
-                        <div className="text-muted mb-1">Ubicación</div>
-                        <div className="fw-medium">{prospecto.ubicacion || 'No disponible'}</div>
-                    </Col>
-                    <Col xs={12} md={6}>
-                        <div className="text-muted mb-1">Fecha de Creación</div>
-                        <div className="fw-medium">{formatDate(prospecto.created_at)}</div>
-                    </Col>
-                </Row>
-                <Row className="mb-3">
-                    <Col xs={12}>
-                        <div className="text-muted mb-1">Origen</div>
-                        <div className="fw-medium">{prospecto.origen || 'No especificado'}</div>
-                    </Col>
-                </Row>
-                <Row>
-                    <Col xs={12}>
-                        <div className="text-muted mb-1">Notas</div>
-                        <div className="fw-medium">
-                            {prospecto.notas || 'Sin notas'}
-                        </div>
-                    </Col>
-                </Row>
+                {prospecto.notas && (
+                    <Row className="mt-3">
+                        <Col sm={12}>
+                            <h5 className="mb-1">Notas</h5>
+                            <p>{prospecto.notas}</p>
+                        </Col>
+                    </Row>
+                )}
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="secondary" onClick={onHide}>
                     Cerrar
                 </Button>
-                <Button variant="primary" onClick={handleCrearSolicitud}>
+                <Button variant="primary" onClick={crearSolicitud}>
                     Crear Solicitud
                 </Button>
             </Modal.Footer>
