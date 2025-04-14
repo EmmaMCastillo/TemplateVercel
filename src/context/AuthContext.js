@@ -7,8 +7,16 @@ import { useRouter } from 'next/navigation';
 const supabaseUrl = 'https://ljkqmizvyhlsfiqmpubr.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxqa3FtaXp2eWhsc2ZpcW1wdWJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2NTE4NzEsImV4cCI6MjA1OTIyNzg3MX0.P25CoZR3XGsXv0I3E_QMbFsTO-GmJoLsZfxblADhTRs';
 
-// Crear cliente de Supabase
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Crear cliente de Supabase con opciones de persistencia
+const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+        persistSession: true,
+        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        flowType: 'implicit',
+    }
+});
 
 // Crear contexto de autenticación
 const AuthContext = createContext();
@@ -71,16 +79,28 @@ export function AuthProvider({ children }) {
     }, []);
 
     // Función para iniciar sesión
-    const signIn = async (email, password) => {
+    const signIn = async (email, password, keepSession = true) => {
         try {
+            // Configurar opciones de persistencia según la elección del usuario
+            const options = {
+                emailRedirectTo: `${window.location.origin}/`,
+            };
+
+            // Limpiar cualquier sesión anterior que pueda estar causando problemas
+            await supabase.auth.signOut();
+            
+            // Iniciar sesión con las opciones configuradas
             const { data, error } = await supabase.auth.signInWithPassword({
                 email,
                 password,
+                options: options
             });
             
             if (error) {
                 throw error;
             }
+            
+            console.log('Inicio de sesión exitoso:', data);
             
             return { success: true, data };
         } catch (err) {
@@ -92,10 +112,24 @@ export function AuthProvider({ children }) {
     // Función para cerrar sesión
     const signOut = async () => {
         try {
+            // Limpiar completamente la sesión
             const { error } = await supabase.auth.signOut();
             
             if (error) {
                 throw error;
+            }
+            
+            // Limpiar cualquier dato de sesión que pueda haber quedado en localStorage
+            if (typeof window !== 'undefined') {
+                localStorage.removeItem('supabase.auth.token');
+                localStorage.removeItem('supabase.auth.refreshToken');
+                
+                // Limpiar cualquier otro dato de sesión que pueda estar causando problemas
+                Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith('supabase.auth.')) {
+                        localStorage.removeItem(key);
+                    }
+                });
             }
             
             router.push('/auth/login/classic');

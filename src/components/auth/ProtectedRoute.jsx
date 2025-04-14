@@ -17,45 +17,65 @@ const ProtectedRoute = ({
 
   useEffect(() => {
     const checkAuth = async () => {
-      // Esperar a que se cargue el estado de autenticación
-      if (loading) return;
+      try {
+        // Esperar a que se cargue el estado de autenticación
+        if (loading) return;
 
-      // Si no hay usuario, redirigir al login
-      if (!user) {
-        router.push('/auth/login/classic');
-        return;
-      }
+        // Si no hay usuario, redirigir al login
+        if (!user) {
+          console.log('No hay usuario autenticado, redirigiendo al login');
+          
+          // Establecer un timeout para evitar redirecciones infinitas
+          setTimeout(() => {
+            router.push('/auth/login/classic');
+          }, 100);
+          return;
+        }
 
-      // Si no se requiere un módulo específico, solo verificar autenticación
-      if (!requiredModule) {
+        // Si no se requiere un módulo específico, solo verificar autenticación
+        if (!requiredModule) {
+          setAuthorized(true);
+          setChecking(false);
+          return;
+        }
+
+        // Verificar permisos específicos
+        const hasAccess = await hasPermission(requiredModule, requiredAction, requiredLevel);
+        
+        if (!hasAccess) {
+          console.log('Usuario no tiene permisos para acceder a este módulo');
+          // Redirigir a una página de acceso denegado o al dashboard
+          router.push('/');
+          return;
+        }
+
         setAuthorized(true);
         setChecking(false);
-        return;
+      } catch (error) {
+        console.error('Error al verificar autenticación:', error);
+        // En caso de error, redirigir al login
+        router.push('/auth/login/classic');
       }
-
-      // Verificar permisos específicos
-      const hasAccess = await hasPermission(requiredModule, requiredAction, requiredLevel);
-      
-      if (!hasAccess) {
-        // Redirigir a una página de acceso denegado o al dashboard
-        router.push('/');
-        return;
-      }
-
-      setAuthorized(true);
-      setChecking(false);
     };
 
-    checkAuth();
+    // Establecer un timeout para evitar problemas de carrera
+    const timeoutId = setTimeout(checkAuth, 100);
+    
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, [user, loading, router, requiredModule, requiredAction, requiredLevel, hasPermission]);
 
   // Mostrar spinner mientras se verifica la autenticación
   if (loading || checking) {
     return (
       <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
-        <Spinner animation="border" role="status" variant="primary">
-          <span className="visually-hidden">Cargando...</span>
-        </Spinner>
+        <div className="text-center">
+          <Spinner animation="border" role="status" variant="primary" className="mb-2">
+            <span className="visually-hidden">Cargando...</span>
+          </Spinner>
+          <p className="text-muted">Verificando autenticación...</p>
+        </div>
       </div>
     );
   }
