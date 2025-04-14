@@ -44,8 +44,10 @@ const LoginClassic = () => {
                 throw new Error('La contraseña es obligatoria');
             }
 
+            console.log('Iniciando sesión con keepLoggedIn:', keepLoggedIn);
+
             // Iniciar sesión usando el contexto de autenticación
-            const { success, error: authError } = await signIn(email, password);
+            const { success, error: authError } = await signIn(email, password, keepLoggedIn);
 
             if (!success) {
                 throw new Error(authError || 'Error al iniciar sesión');
@@ -132,14 +134,19 @@ const LoginClassic = () => {
                                                         </Col>
                                                     </Row>
                                                     <div className="d-flex justify-content-center mb-4">
-                                                        <Form.Check 
-                                                            id="logged_in" 
-                                                            className="form-check-sm" 
+                                                        <Form.Check
+                                                            id="logged_in"
+                                                            className="form-check-sm"
                                                             checked={keepLoggedIn}
                                                             onChange={(e) => setKeepLoggedIn(e.target.checked)}
                                                         >
                                                             <Form.Check.Input type="checkbox" />
-                                                            <Form.Check.Label className="text-muted fs-7">Keep me logged in</Form.Check.Label>
+                                                            <Form.Check.Label className="text-muted fs-7">
+                                                                Keep me logged in
+                                                                <span className="d-block text-muted fs-8">
+                                                                    (No recomendado en dispositivos compartidos)
+                                                                </span>
+                                                            </Form.Check.Label>
                                                         </Form.Check>
                                                     </div>
                                                     <Button 
