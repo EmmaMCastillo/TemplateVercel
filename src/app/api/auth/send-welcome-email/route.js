@@ -12,6 +12,12 @@ const ses = new AWS.SES({ apiVersion: '2010-12-01' });
 
 export async function POST(request) {
   try {
+    // Imprimir las variables de entorno para depuración
+    console.log('AWS_REGION:', process.env.AWS_REGION);
+    console.log('AWS_ACCESS_KEY_ID:', process.env.AWS_ACCESS_KEY_ID ? 'Configurado' : 'No configurado');
+    console.log('AWS_SECRET_ACCESS_KEY:', process.env.AWS_SECRET_ACCESS_KEY ? 'Configurado' : 'No configurado');
+    console.log('AWS_SES_FROM_EMAIL:', process.env.AWS_SES_FROM_EMAIL);
+    
     const { email, nombre, temporaryPassword } = await request.json();
 
     if (!email || !nombre) {
@@ -160,8 +166,44 @@ export async function POST(request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error al enviar correo de bienvenida:', error);
+    
+    // Proporcionar información más detallada sobre el error
+    let errorMessage = 'Error al enviar correo de bienvenida';
+    let errorDetails = {};
+    
+    if (error.code === 'InvalidClientTokenId') {
+      errorMessage = 'Credenciales de AWS inválidas';
+      errorDetails = {
+        suggestion: 'Verifique que las credenciales de AWS (AWS_ACCESS_KEY_ID y AWS_SECRET_ACCESS_KEY) sean correctas y estén activas.',
+        code: error.code,
+        statusCode: error.statusCode
+      };
+    } else if (error.code === 'MessageRejected') {
+      errorMessage = 'Mensaje rechazado por AWS SES';
+      errorDetails = {
+        suggestion: 'La cuenta de AWS SES está en modo sandbox. Verifique que el correo del remitente y destinatario estén verificados en la consola de AWS SES.',
+        code: error.code,
+        statusCode: error.statusCode
+      };
+    }
+    
+    // Simular éxito en entorno de desarrollo para permitir pruebas
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Simulando envío exitoso en entorno de desarrollo');
+      return NextResponse.json({
+        success: true,
+        warning: 'Correo simulado en entorno de desarrollo',
+        originalError: errorMessage,
+        details: errorDetails
+      });
+    }
+    
     return NextResponse.json(
-      { error: 'Error al enviar correo de bienvenida' },
+      {
+        error: errorMessage,
+        details: errorDetails,
+        originalError: error.message
+      },
       { status: 500 }
     );
   }
