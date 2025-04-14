@@ -12,7 +12,7 @@ async function testSendEmail() {
         };
         
         // Llamar a la API de envío de correos
-        const response = await fetch('http://localhost:3001/api/auth/send-welcome-email', {
+        const response = await fetch('http://localhost:3000/api/auth/send-welcome-email', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
