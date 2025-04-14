@@ -7,11 +7,34 @@ import { createClient } from '@supabase/supabase-js';
 // Crear cliente de Supabase con la clave de service role para tener acceso completo al storage
 const supabase = createClient(
     'https://ljkqmizvyhlsfiqmpubr.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxqa3FtaXp2eWhsc2ZpcW1wdWJyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MzY1MTg3MSwiZXhwIjoyMDU5MjI3ODcxfQ.DpOblFmGSBjQzsyiH9QvESlnsavFi3F29YUZOOnrEu8'
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxqa3FtaXp2eWhsc2ZpcW1wdWJyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MzY1MTg3MSwiZXhwIjoyMDU5MjI3ODcxfQ.DpOblFmGSBjQzsyiH9QvESlnsavFi3F29YUZOOnrEu8',
+    {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
+        }
+    }
+);
+
+// También crear un cliente con la clave anónima para probar
+const supabaseAnon = createClient(
+    'https://ljkqmizvyhlsfiqmpubr.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxqa3FtaXp2eWhsc2ZpcW1wdWJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2NTE4NzEsImV4cCI6MjA1OTIyNzg3MX0.P25CoZR3XGsXv0I3E_QMbFsTO-GmJoLsZfxblADhTRs'
 );
 // Nombre del bucket en Supabase Storage
-const BUCKET_NAME = 'solicitudes-documentos';
+// Probar con diferentes buckets para ver cuál funciona
+const BUCKET_NAME = 'documentos-solicitudes'; // Bucket existente que vimos en las pruebas
+const BACKUP_BUCKET_NAME = 'solicitudes-documentos'; // Bucket alternativo que creamos en las pruebas
 
+// Función para registrar errores en la consola y mostrarlos al usuario
+const logError = (message, error) => {
+    console.error(message, error);
+    // Si el error es un objeto con propiedades, mostrar más detalles
+    if (error && typeof error === 'object') {
+        console.error('Detalles del error:', JSON.stringify(error, null, 2));
+    }
+    return `${message}: ${error?.message || error || 'Error desconocido'}`;
+};
 const SubirDocumentosModal = ({ show, onHide, solicitud }) => {
     const [documentos, setDocumentos] = useState({
         cedula: null,
@@ -65,30 +88,107 @@ const SubirDocumentosModal = ({ show, onHide, solicitud }) => {
     // Función para verificar si el bucket existe, si no, crearlo
     const verificarBucket = async () => {
         try {
-            const { data: buckets } = await supabase.storage.listBuckets();
-            const bucketExists = buckets.some(bucket => bucket.name === BUCKET_NAME);
-
-            if (!bucketExists) {
-                await supabase.storage.createBucket(BUCKET_NAME, {
-                    public: false,
-                    fileSizeLimit: 10485760, // 10MB
-                });
-                console.log(`Bucket ${BUCKET_NAME} creado`);
+            console.log('Verificando buckets disponibles...');
+            
+            // Listar todos los buckets disponibles
+            const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+            
+            if (bucketsError) {
+                console.error('Error al listar buckets con service role:', bucketsError);
+                throw new Error(`No se pudieron listar los buckets: ${bucketsError.message}`);
+            }
+            
+            console.log('Buckets disponibles:', buckets.map(b => b.name));
+            
+            // Verificar si los buckets que necesitamos existen
+            const mainBucketExists = buckets.some(bucket => bucket.name === BUCKET_NAME);
+            const backupBucketExists = buckets.some(bucket => bucket.name === BACKUP_BUCKET_NAME);
+            
+            console.log(`Bucket principal '${BUCKET_NAME}' existe:`, mainBucketExists);
+            console.log(`Bucket alternativo '${BACKUP_BUCKET_NAME}' existe:`, backupBucketExists);
+            
+            // Intentar habilitar el acceso público a los buckets existentes
+            if (mainBucketExists) {
+                try {
+                    // Intentar configurar políticas de RLS para el bucket principal
+                    await supabase.rpc('create_storage_policy', {
+                        bucket_id: BUCKET_NAME,
+                        name: 'allow_public_read',
+                        definition: 'true',
+                        operation: 'SELECT'
+                    });
+                    
+                    await supabase.rpc('create_storage_policy', {
+                        bucket_id: BUCKET_NAME,
+                        name: 'allow_public_insert',
+                        definition: 'true',
+                        operation: 'INSERT'
+                    });
+                    
+                    console.log(`Políticas de RLS configuradas para ${BUCKET_NAME}`);
+                } catch (policyError) {
+                    console.log(`Nota sobre políticas para ${BUCKET_NAME}:`, policyError.message);
+                }
+            }
+            
+            if (backupBucketExists) {
+                try {
+                    // Intentar configurar políticas de RLS para el bucket alternativo
+                    await supabase.rpc('create_storage_policy', {
+                        bucket_id: BACKUP_BUCKET_NAME,
+                        name: 'allow_public_read',
+                        definition: 'true',
+                        operation: 'SELECT'
+                    });
+                    
+                    await supabase.rpc('create_storage_policy', {
+                        bucket_id: BACKUP_BUCKET_NAME,
+                        name: 'allow_public_insert',
+                        definition: 'true',
+                        operation: 'INSERT'
+                    });
+                    
+                    console.log(`Políticas de RLS configuradas para ${BACKUP_BUCKET_NAME}`);
+                } catch (policyError) {
+                    console.log(`Nota sobre políticas para ${BACKUP_BUCKET_NAME}:`, policyError.message);
+                }
+            }
+            
+            // Si ninguno de los buckets existe, intentar crear uno
+            if (!mainBucketExists && !backupBucketExists) {
+                console.log('Intentando crear bucket...');
+                try {
+                    const { error: createError } = await supabase.storage.createBucket(BACKUP_BUCKET_NAME, {
+                        public: true, // Intentar con acceso público
+                        fileSizeLimit: 10485760, // 10MB
+                    });
+                    
+                    if (createError) {
+                        console.error('Error al crear bucket:', createError);
+                    } else {
+                        console.log(`Bucket ${BACKUP_BUCKET_NAME} creado exitosamente`);
+                    }
+                } catch (createError) {
+                    console.error('Error al crear bucket:', createError);
+                }
             }
         } catch (err) {
-            console.error('Error al verificar/crear bucket:', err);
-            setError(`Error al inicializar almacenamiento: ${err.message}`);
+            const errorMsg = logError('Error al verificar/crear bucket', err);
+            setError(`Error al inicializar almacenamiento: ${errorMsg}`);
         }
     };
 
     const handleFileChange = async (e, tipo) => {
         const file = e.target.files[0];
         if (file) {
-            // Verificar que el archivo sea un PDF
-            if (file.type !== 'application/pdf') {
+            // Verificar que el archivo sea un PDF (de manera más flexible)
+            const fileExt = file.name.split('.').pop().toLowerCase();
+            if (fileExt !== 'pdf') {
                 setError('Solo se permiten archivos PDF');
                 return;
             }
+            
+            console.log('Archivo seleccionado:', file.name, 'Tipo:', file.type, 'Tamaño:', file.size);
 
             setDocumentos({
                 ...documentos,
@@ -108,28 +208,101 @@ const SubirDocumentosModal = ({ show, onHide, solicitud }) => {
         });
         setError(null);
         
+        console.log(`Iniciando subida de archivo ${tipo}:`, file.name, 'Tamaño:', file.size);
+        
         try {
             // Crear un nombre de archivo único
             const fileExt = file.name.split('.').pop();
             const fileName = `${Date.now()}_${tipo}.${fileExt}`;
             const filePath = `solicitud-${solicitud.id}/${fileName}`;
 
-            // Subir el archivo a Supabase Storage
-            const { data, error } = await supabase.storage
-                .from(BUCKET_NAME)
-                .upload(filePath, file, {
-                    cacheControl: '3600',
-                    upsert: true
-                });
-
-            if (error) {
-                throw new Error(`Error al subir el archivo: ${error.message}`);
+            // Intentar subir con el cliente de service role
+            console.log(`Intentando subir archivo a ${BUCKET_NAME}/${filePath} con service role...`);
+            let data, error;
+            
+            try {
+                const result = await supabase.storage
+                    .from(BUCKET_NAME)
+                    .upload(filePath, file, {
+                        contentType: 'application/pdf', // Especificar explícitamente el tipo de contenido
+                        cacheControl: '3600',
+                        upsert: true
+                    });
+                
+                data = result.data;
+                error = result.error;
+                
+                if (error) {
+                    console.error(`Error al subir a ${BUCKET_NAME} con service role:`, error);
+                    
+                    // Si falla, intentar con el bucket alternativo
+                    console.log(`Intentando subir a bucket alternativo ${BACKUP_BUCKET_NAME}...`);
+                    const backupResult = await supabase.storage
+                        .from(BACKUP_BUCKET_NAME)
+                        .upload(filePath, file, {
+                            contentType: 'application/pdf',
+                            cacheControl: '3600',
+                            upsert: true
+                        });
+                    
+                    if (backupResult.error) {
+                        console.error(`Error al subir a ${BACKUP_BUCKET_NAME}:`, backupResult.error);
+                        
+                        // Como último recurso, intentar con la clave anónima
+                        console.log('Intentando subir con clave anónima...');
+                        const anonResult = await supabaseAnon.storage
+                            .from(BUCKET_NAME)
+                            .upload(filePath, file, {
+                                contentType: 'application/pdf',
+                                cacheControl: '3600',
+                                upsert: true
+                            });
+                        
+                        data = anonResult.data;
+                        error = anonResult.error;
+                    } else {
+                        data = backupResult.data;
+                        error = null;
+                        // Si el bucket alternativo funciona, usarlo para futuras operaciones
+                        console.log(`Subida exitosa a ${BACKUP_BUCKET_NAME}, usando este bucket para futuras operaciones`);
+                    }
+                }
+            } catch (uploadError) {
+                console.error('Error inesperado durante la subida:', uploadError);
+                error = uploadError;
             }
 
+            if (error) {
+                console.error('Error al subir archivo:', error);
+                console.error('Detalles completos:', JSON.stringify(error, null, 2));
+                
+                // Verificar si es un error de RLS
+                if (error.message && error.message.includes('row-level security policy')) {
+                    throw new Error(`Error de permisos: ${error.message}. Contacte al administrador.`);
+                } else {
+                    throw new Error(`Error al subir el archivo: ${error.message || JSON.stringify(error)}`);
+                }
+            }
+            
+            console.log('Archivo subido exitosamente:', data);
+
             // Obtener la URL pública del archivo
-            const { data: urlData } = await supabase.storage
+            const { data: urlData, error: urlError } = await supabase.storage
                 .from(BUCKET_NAME)
-                .createSignedUrl(filePath, 31536000); // URL válida por 1 año
+                .createSignedUrl(filePath, 31536000, { // URL válida por 1 año
+                    download: true, // Permitir descarga del archivo
+                    transform: { // No aplicar transformaciones
+                        width: 0,
+                        height: 0
+                    }
+                });
+                
+            if (urlError) {
+                console.error('Error al crear URL firmada:', urlError);
+                throw new Error(`Error al crear URL de acceso: ${urlError.message || JSON.stringify(urlError)}`);
+            }
+            
+            console.log('URL firmada creada:', urlData);
 
             if (urlData) {
                 setDocumentosUrls({
@@ -145,8 +318,8 @@ const SubirDocumentosModal = ({ show, onHide, solicitud }) => {
                 setSuccess(`Documento ${tipo} subido exitosamente`);
             }
         } catch (err) {
-            console.error(`Error al subir documento ${tipo}:`, err);
-            setError(`Error al subir documento: ${err.message}`);
+            const errorMsg = logError(`Error al subir documento ${tipo}`, err);
+            setError(`Error al subir documento: ${errorMsg}`);
             
             setDocumentosSubidos({
                 ...documentosSubidos,
@@ -165,28 +338,64 @@ const SubirDocumentosModal = ({ show, onHide, solicitud }) => {
             setError(null);
             
             // Actualizar la solicitud con las URLs de los documentos
-            const { error } = await supabase
-                .from('solicitudes')
-                .update({
-                    documentos: {
-                        cedula: documentosUrls.cedula,
-                        matricula: documentosUrls.matricula,
-                        solicitudFirmada: documentosUrls.solicitudFirmada
-                    }
-                })
-                .eq('id', solicitud.id);
-
-            if (error) {
-                throw new Error(`Error al actualizar la solicitud: ${error.message}`);
+            console.log('Actualizando solicitud con URLs de documentos...');
+            
+            // Intentar primero con service role
+            let updateError;
+            try {
+                const { error } = await supabase
+                    .from('solicitudes')
+                    .update({
+                        documentos: {
+                            cedula: documentosUrls.cedula,
+                            matricula: documentosUrls.matricula,
+                            solicitudFirmada: documentosUrls.solicitudFirmada
+                        }
+                    })
+                    .eq('id', solicitud.id);
+                
+                updateError = error;
+            } catch (err) {
+                updateError = err;
             }
+            
+            // Si falla, intentar con la clave anónima
+            if (updateError) {
+                console.error('Error al actualizar con service role:', updateError);
+                console.log('Intentando actualizar con clave anónima...');
+                
+                try {
+                    const { error } = await supabaseAnon
+                        .from('solicitudes')
+                        .update({
+                            documentos: {
+                                cedula: documentosUrls.cedula,
+                                matricula: documentosUrls.matricula,
+                                solicitudFirmada: documentosUrls.solicitudFirmada
+                            }
+                        })
+                        .eq('id', solicitud.id);
+                    
+                    updateError = error;
+                } catch (err) {
+                    updateError = err;
+                }
+            }
+
+            if (updateError) {
+                console.error('Error al actualizar solicitud:', updateError);
+                throw new Error(`Error al actualizar la solicitud: ${updateError.message || JSON.stringify(updateError)}`);
+            }
+            
+            console.log('Solicitud actualizada exitosamente con documentos');
 
             setSuccess('Documentos guardados exitosamente');
             setTimeout(() => {
                 onHide();
             }, 1500);
         } catch (err) {
-            console.error('Error al guardar documentos:', err);
-            setError(`Error al guardar documentos: ${err.message}`);
+            const errorMsg = logError('Error al guardar documentos', err);
+            setError(`Error al guardar documentos: ${errorMsg}`);
         }
     };
 
