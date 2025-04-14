@@ -98,7 +98,7 @@ export async function POST(request) {
             <p>Por razones de seguridad, te recomendamos cambiar tu contraseña después de iniciar sesión por primera vez.</p>
             
             <div style="text-align: center;">
-              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/login/classic" class="button">Iniciar Sesión</a>
+              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://template-vercel-chi.vercel.app'}/auth/login/classic" class="button">Iniciar Sesión</a>
             </div>
             
             <p>Si tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos.</p>
@@ -125,7 +125,7 @@ export async function POST(request) {
       ${temporaryPassword ? `Contraseña temporal: ${temporaryPassword}` : ''}
       
       Por razones de seguridad, te recomendamos cambiar tu contraseña después de iniciar sesión por primera vez.
-      
+      Para iniciar sesión, visita: ${process.env.NEXT_PUBLIC_APP_URL || 'https://template-vercel-chi.vercel.app'}/auth/login/classic
       Para iniciar sesión, visita: ${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/login/classic
       
       Si tienes alguna pregunta o necesitas ayuda, no dudes en contactarnos.
@@ -160,12 +160,15 @@ export async function POST(request) {
       }
     };
 
-    // Enviar el correo
-    await ses.sendEmail(params).promise();
-
+    // Iniciar el envío del correo pero no esperar a que termine
+    ses.sendEmail(params).promise()
+      .then(() => console.log('Correo enviado exitosamente a:', email))
+      .catch(err => console.error('Error al enviar correo:', err));
+    
+    // Responder inmediatamente con éxito
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error al enviar correo de bienvenida:', error);
+    console.error('Error al preparar el envío de correo:', error);
     
     // Proporcionar información más detallada sobre el error
     let errorMessage = 'Error al enviar correo de bienvenida';
@@ -187,16 +190,16 @@ export async function POST(request) {
       };
     }
     
-    // Simular éxito en entorno de desarrollo para permitir pruebas
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Simulando envío exitoso en entorno de desarrollo');
-      return NextResponse.json({
-        success: true,
-        warning: 'Correo simulado en entorno de desarrollo',
-        originalError: errorMessage,
-        details: errorDetails
-      });
-    }
+    // Comentado temporalmente para probar el envío real
+    // if (process.env.NODE_ENV === 'development') {
+    //   console.log('Simulando envío exitoso en entorno de desarrollo');
+    //   return NextResponse.json({
+    //     success: true,
+    //     warning: 'Correo simulado en entorno de desarrollo',
+    //     originalError: errorMessage,
+    //     details: errorDetails
+    //   });
+    // }
     
     return NextResponse.json(
       {

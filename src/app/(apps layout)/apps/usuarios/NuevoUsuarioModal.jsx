@@ -62,6 +62,31 @@ const NuevoUsuarioModal = ({ show, onHide, onUsuarioCreated }) => {
         return password;
     };
 
+    // Función para enviar correo de bienvenida (separada para no bloquear la creación de usuario)
+    const sendWelcomeEmail = async (email, nombre, temporaryPassword) => {
+        try {
+            console.log('Enviando correo de bienvenida a:', email);
+            const response = await fetch('/api/auth/send-welcome-email', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email,
+                    nombre,
+                    temporaryPassword
+                }),
+            });
+            
+            const result = await response.json();
+            console.log('Resultado del envío de correo:', result);
+            return { success: true, result };
+        } catch (error) {
+            console.error('Error al enviar correo de bienvenida:', error);
+            return { success: false, error };
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -81,7 +106,7 @@ const NuevoUsuarioModal = ({ show, onHide, onUsuarioCreated }) => {
             // Generar contraseña aleatoria si no se proporciona una
             const password = formData.password.trim() || generateRandomPassword();
             
-            // Crear usuario en Supabase Auth usando la clave de servicio
+            // Crear usuario en Supabase Auth
             const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
                 email: formData.email,
                 password: password,
@@ -96,44 +121,34 @@ const NuevoUsuarioModal = ({ show, onHide, onUsuarioCreated }) => {
                 throw new Error(`Error al crear el usuario: ${authError.message}`);
             }
             
-            console.log('Usuario creado exitosamente en Auth:', authData);
+            console.log('Usuario creado exitosamente en Auth');
             
-            // Guardar información adicional en la tabla roles_permisos si es necesario
+            // Configurar roles y permisos (si es necesario)
             if (formData.rol) {
-                // Verificar si ya existe un registro para este rol
-                const { data: existingRole } = await supabase
-                    .from('roles_permisos')
-                    .select('id')
-                    .eq('rol_id', formData.rol)
-                    .single();
-                
-                if (!existingRole) {
-                    // Crear permisos por defecto para el rol si no existen
-                    await supabase
+                try {
+                    const { data: existingRole } = await supabase
                         .from('roles_permisos')
-                        .insert([
-                            {
-                                rol_id: formData.rol,
-                                permisos: {}
-                            }
-                        ]);
+                        .select('id')
+                        .eq('rol_id', formData.rol)
+                        .single();
+                    
+                    if (!existingRole) {
+                        await supabase
+                            .from('roles_permisos')
+                            .insert([
+                                {
+                                    rol_id: formData.rol,
+                                    permisos: {}
+                                }
+                            ]);
+                    }
+                } catch (roleErr) {
+                    console.warn('Error al configurar roles y permisos:', roleErr);
+                    // Continuamos con el proceso aunque haya un error en esta parte
                 }
             }
             
-            // Enviar correo de bienvenida
-            await fetch('/api/auth/send-welcome-email', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    email: formData.email,
-                    nombre: formData.nombre,
-                    temporaryPassword: !formData.password.trim() ? password : null
-                }),
-            });
-            
-            // Mostrar mensaje de éxito
+            // Mostrar mensaje de éxito inmediatamente
             setSuccess(true);
             
             // Limpiar formulario
@@ -151,8 +166,22 @@ const NuevoUsuarioModal = ({ show, onHide, onUsuarioCreated }) => {
             
             // Cerrar modal después de un tiempo
             setTimeout(() => {
-                if (success) onHide();
+                onHide();
             }, 2000);
+            
+            // Enviar correo de bienvenida en segundo plano (no esperamos a que termine)
+            if (!formData.password.trim()) {
+                // Solo enviamos el correo si se generó una contraseña automáticamente
+                sendWelcomeEmail(formData.email, formData.nombre, password)
+                    .then(emailResult => {
+                        if (!emailResult.success) {
+                            console.warn('No se pudo enviar el correo de bienvenida, pero el usuario fue creado correctamente');
+                        }
+                    })
+                    .catch(emailError => {
+                        console.error('Error al enviar correo de bienvenida:', emailError);
+                    });
+            }
         } catch (err) {
             console.error('Error al crear el usuario:', err);
             setError(err.message || 'Error al crear el usuario. Por favor, intente de nuevo.');
