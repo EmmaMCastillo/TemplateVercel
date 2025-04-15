@@ -46,17 +46,21 @@ export async function sendWhatsappNotification({
     // Construir la URL de la API
     const apiUrl = `https://graph.facebook.com/v22.0/${phoneNumberId}/messages`;
     
-    // Construir el cuerpo de la solicitud para un mensaje de texto
+    // En modo sandbox, solo se pueden enviar mensajes usando plantillas predefinidas
+    // Construir el cuerpo de la solicitud usando la plantilla hello_world
     const requestBody = {
       messaging_product: "whatsapp",
-      recipient_type: "individual",
       to: formattedPhoneNumber,
-      type: "text",
-      text: {
-        preview_url: false,
-        body: message
+      type: "template",
+      template: {
+        name: "hello_world",
+        language: {
+          code: "en_US"
+        }
       }
     };
+    
+    console.log('NOTA: Usando plantilla hello_world en modo sandbox');
     
     // Realizar la solicitud a la API
     const response = await fetch(apiUrl, {
@@ -97,6 +101,8 @@ export async function sendWhatsappNotification({
  * @param {string} params.phoneNumber - Número de teléfono del destinatario
  * @param {string} params.nombre - Nombre del usuario
  * @returns {Promise<Object>} - Resultado de la operación
+ *
+ * NOTA: En modo sandbox, se usa la plantilla hello_world en lugar de un mensaje personalizado
  */
 export async function sendWelcomeWhatsappMessage({ phoneNumber, nombre }) {
   const message = `Hola ${nombre}, ¡tu registro fue exitoso! En breve te daremos acceso al sistema. 🛠️`;

@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
 import { sendWelcomeWhatsappMessage } from '@/utils/notifications/whatsappSender';
 
+/**
+ * Endpoint para enviar notificaciones por WhatsApp
+ *
+ * NOTA: En modo sandbox, solo se pueden enviar mensajes usando plantillas predefinidas.
+ * Actualmente se usa la plantilla "hello_world" en lugar de mensajes personalizados.
+ */
 export async function POST(request) {
   try {
     // Obtener datos de la solicitud
@@ -19,6 +25,7 @@ export async function POST(request) {
     console.log('PHONE_NUMBER_ID:', process.env.PHONE_NUMBER_ID ? 'Configurado' : 'No configurado');
     
     // Iniciar el envío del mensaje pero no esperar a que termine
+    // NOTA: En modo sandbox, se usa la plantilla hello_world en lugar de un mensaje personalizado
     sendWelcomeWhatsappMessage({ phoneNumber, nombre })
       .then(result => {
         if (result.success) {

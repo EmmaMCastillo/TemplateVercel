@@ -39,17 +39,21 @@ async function testWhatsappNotification(phoneNumber, nombre) {
     // Construir la URL de la API
     const apiUrl = `https://graph.facebook.com/v22.0/${phoneNumberId}/messages`;
     
-    // Construir el cuerpo de la solicitud para un mensaje de texto
+    // Construir el cuerpo de la solicitud usando la plantilla hello_world (modo sandbox)
     const requestBody = {
       messaging_product: "whatsapp",
-      recipient_type: "individual",
       to: formattedPhoneNumber,
-      type: "text",
-      text: {
-        preview_url: false,
-        body: message
+      type: "template",
+      template: {
+        name: "hello_world",
+        language: {
+          code: "en_US" // Usando inglés como en el ejemplo original
+        }
       }
     };
+    
+    console.log('NOTA: En modo sandbox de WhatsApp, solo se pueden enviar mensajes usando plantillas predefinidas.');
+    console.log('Estamos usando la plantilla "hello_world" en lugar del mensaje personalizado.');
     
     console.log('Enviando solicitud a la API de WhatsApp Cloud...');
     console.log('URL:', apiUrl);

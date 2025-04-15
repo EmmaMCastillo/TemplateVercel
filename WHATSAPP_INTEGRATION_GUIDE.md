@@ -4,6 +4,8 @@
 
 Hemos implementado la integración de envío automático de notificaciones por WhatsApp cuando se crea un nuevo usuario, utilizando la API oficial de WhatsApp Cloud. La solución está completamente integrada con el flujo existente de creación de usuarios.
 
+> **NOTA IMPORTANTE**: La cuenta de WhatsApp Business API está actualmente en modo sandbox, lo que significa que solo se pueden enviar mensajes usando plantillas predefinidas. Actualmente se usa la plantilla "hello_world" en lugar de mensajes personalizados. Para enviar mensajes personalizados, es necesario solicitar la aprobación de la cuenta en modo producción.
+
 ### Componentes Implementados
 
 1. **Servicio de WhatsApp**
@@ -78,15 +80,50 @@ Error validating access token: Session has expired
 
 Significa que el token de acceso ha expirado y necesitas generar uno nuevo siguiendo los pasos en la sección "Actualización del Token de Acceso".
 
+### Limitaciones del Modo Sandbox
+
+La cuenta de WhatsApp Business API está actualmente en modo sandbox, lo que implica las siguientes limitaciones:
+
+1. **Solo se pueden usar plantillas predefinidas**: No es posible enviar mensajes de texto personalizados.
+2. **Plantilla "hello_world"**: Actualmente se usa esta plantilla en inglés, que envía un mensaje genérico.
+3. **Números verificados**: Solo se pueden enviar mensajes a números de teléfono que hayan sido verificados en la cuenta de desarrollador.
+4. **Límite de mensajes**: Hay un límite en la cantidad de mensajes que se pueden enviar por día.
+
+Para superar estas limitaciones, es necesario solicitar la aprobación de la cuenta en modo producción a través del [Meta Business Manager](https://business.facebook.com/).
+
 ### Error de Número de Teléfono
 
 Si recibes un error relacionado con el número de teléfono, asegúrate de que:
 1. El número esté en formato internacional (ej: +573153041548)
 2. El número esté registrado en WhatsApp
-3. Si estás en modo sandbox de WhatsApp, el número debe estar verificado en tu cuenta de desarrollador
+3. El número esté verificado en tu cuenta de desarrollador de WhatsApp (requisito en modo sandbox)
 
 ## Recursos Adicionales
 
 - [Documentación oficial de WhatsApp Cloud API](https://developers.facebook.com/docs/whatsapp/cloud-api/)
 - [Sample endpoints de WhatsApp Cloud API](https://developers.facebook.com/docs/whatsapp/sample-app-endpoints/)
 - [Configuración de webhooks](https://developers.facebook.com/docs/whatsapp/cloud-api/get-started#configure-webhooks)
+- [Plantillas de mensajes](https://developers.facebook.com/docs/whatsapp/cloud-api/guides/send-message-templates)
+- [Solicitar aprobación para modo producción](https://developers.facebook.com/docs/whatsapp/cloud-api/get-started#move-to-production)
+
+## Próximos Pasos para Producción
+
+Para utilizar mensajes personalizados y enviar a cualquier número de teléfono, se recomienda:
+
+1. Solicitar la aprobación de la cuenta en modo producción
+2. Crear plantillas de mensajes personalizadas para diferentes casos de uso
+3. Una vez aprobada la cuenta, modificar el código para usar mensajes personalizados en lugar de la plantilla "hello_world"
+
+```javascript
+// Ejemplo de código para mensajes personalizados (para usar después de la aprobación)
+const requestBody = {
+  messaging_product: "whatsapp",
+  recipient_type: "individual",
+  to: formattedPhoneNumber,
+  type: "text",
+  text: {
+    preview_url: false,
+    body: `Hola ${nombre}, ¡tu registro fue exitoso! En breve te daremos acceso al sistema. 🛠️`
+  }
+};
+```
