@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button, Card, Col, Container, Form, InputGroup, Row, Table, Spinner, Alert } from 'react-bootstrap';
 import { Edit, Filter, Plus, Search, Trash, Adjustments } from 'tabler-icons-react';
 import HkBadge from '@/components/@hk-badge/@hk-badge';
@@ -7,6 +7,7 @@ import NuevoUsuarioModal from './NuevoUsuarioModal';
 import EditarUsuarioModal from './EditarUsuarioModal';
 import ConfigurarPermisosModal from './ConfigurarPermisosModal';
 import { supabaseAdmin } from '@/utils/supabase';
+import { useSupabaseAdminQuery } from '@/hooks/useSupabaseAdminQuery';
 
 const UsuariosPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -14,39 +15,12 @@ const UsuariosPage = () => {
     const [showEditarModal, setShowEditarModal] = useState(false);
     const [showPermisosModal, setShowPermisosModal] = useState(false);
     const [selectedUsuario, setSelectedUsuario] = useState(null);
-    const [usuarios, setUsuarios] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    // Cargar usuarios al iniciar
-    useEffect(() => {
-        fetchUsuarios();
-    }, []);
-
-    // Función para cargar usuarios desde Supabase Auth
-    const fetchUsuarios = async () => {
-        try {
-            setLoading(true);
-            
-            // Obtener usuarios de Supabase Auth
-            const { data: { users }, error: authError } = await supabaseAdmin.auth.admin.listUsers();
-            
-            if (authError) {
-                console.error('Error al cargar usuarios:', authError);
-                setError(`Error al cargar usuarios: ${authError.message || 'Error desconocido'}`);
-                return;
-            }
-            
-            console.log('Usuarios cargados:', users?.length || 0);
-            setUsuarios(users || []);
-            setError(null);
-        } catch (err) {
-            console.error('Error general al cargar usuarios:', err);
-            setError(`Error al cargar usuarios: ${err.message || 'Error desconocido'}`);
-        } finally {
-            setLoading(false);
-        }
-    };
+    
+    // Usar el hook personalizado para cargar usuarios
+    const { users: usuarios, loading, error, refetch: fetchUsuarios } = useSupabaseAdminQuery({
+        timeout: 8000,
+        retries: 2
+    });
 
     // Filtrar usuarios según el término de búsqueda
     const filteredUsuarios = usuarios.filter(usuario => 
@@ -90,8 +64,6 @@ const UsuariosPage = () => {
         }
         
         try {
-            setLoading(true);
-            
             // Eliminar usuario de Supabase Auth
             const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(usuarioId);
             
@@ -108,8 +80,6 @@ const UsuariosPage = () => {
         } catch (err) {
             console.error('Error general al eliminar usuario:', err);
             alert(`Error al eliminar usuario: ${err.message || 'Error desconocido'}`);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -127,6 +97,11 @@ const UsuariosPage = () => {
                         <div>
                             {loading && <span className="text-muted">Cargando usuarios...</span>}
                             {error && <span className="text-danger">{error}</span>}
+                            {!loading && !error && (
+                                <Button variant="outline-primary" onClick={fetchUsuarios}>
+                                    Refrescar
+                                </Button>
+                            )}
                         </div>
                         <div className="d-flex gap-2">
                             <Button variant="outline-secondary">

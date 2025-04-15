@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button, Card, Col, Container, Form, InputGroup, Row, Table } from 'react-bootstrap';
 import { Eye, FileText, Filter, Pencil, Plus, Search } from 'tabler-icons-react';
 import HkBadge from '@/components/@hk-badge/@hk-badge';
@@ -7,6 +7,7 @@ import NuevoProspectoModal from './NuevoProspectoModal';
 import VerProspectoModal from './VerProspectoModal';
 import EditarProspectoModal from './EditarProspectoModal';
 import { supabase } from '@/utils/supabase';
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 
 const ProspectosPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -14,37 +15,12 @@ const ProspectosPage = () => {
     const [showVerModal, setShowVerModal] = useState(false);
     const [showEditarModal, setShowEditarModal] = useState(false);
     const [selectedProspecto, setSelectedProspecto] = useState(null);
-    const [prospectos, setProspectos] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    // Cargar prospectos al iniciar
-    useEffect(() => {
-        const fetchProspectos = async () => {
-            try {
-                setLoading(true);
-                const { data, error } = await supabase
-                    .from('prospectos')
-                    .select('*');
-                
-                if (error) {
-                    console.error('Error al cargar prospectos:', error);
-                    setError(`Error al cargar prospectos: ${error.message || 'Error desconocido'}`);
-                } else {
-                    console.log('Prospectos cargados:', data?.length || 0);
-                    setProspectos(data || []);
-                    setError(null);
-                }
-            } catch (err) {
-                console.error('Error general al cargar prospectos:', err);
-                setError(`Error al cargar prospectos: ${err.message || 'Error desconocido'}`);
-            } finally {
-                setLoading(false);
-            }
-        };
-        
-        fetchProspectos();
-    }, []);
+    
+    // Usar el hook personalizado para cargar prospectos
+    const { data: prospectos, loading, error, refetch: fetchProspectos } = useSupabaseQuery('prospectos', {
+        timeout: 8000,
+        retries: 2
+    });
 
     // Función para filtrar prospectos según el término de búsqueda
     const filteredProspectos = prospectos.filter(prospecto => 
@@ -122,6 +98,11 @@ const ProspectosPage = () => {
                         <div>
                             {loading && <span className="text-muted">Cargando prospectos...</span>}
                             {error && <span className="text-danger">{error}</span>}
+                            {!loading && !error && (
+                                <Button variant="outline-primary" onClick={fetchProspectos}>
+                                    Refrescar
+                                </Button>
+                            )}
                         </div>
                         <div className="d-flex gap-2">
                             <Button variant="outline-secondary">
@@ -276,34 +257,7 @@ const ProspectosPage = () => {
             onProspectoCreated={(nuevoProspecto) => {
                 // Recargar prospectos después de crear uno nuevo
                 console.log('Prospecto creado, recargando lista...');
-                setLoading(true);
-                
-                try {
-                    // Primero intentamos con created_at
-                    supabase
-                        .from('prospectos')
-                        .select('*')
-                        .then(({ data, error }) => {
-                            if (error) {
-                                console.error('Error al recargar prospectos:', error);
-                                setError(`Error al actualizar la lista de prospectos: ${error.message || 'Error desconocido'}`);
-                            } else {
-                                console.log('Prospectos recargados:', data?.length || 0);
-                                setProspectos(data || []);
-                                setError(null);
-                            }
-                            setLoading(false);
-                        })
-                        .catch(err => {
-                            console.error('Error en la promesa al recargar prospectos:', err);
-                            setError(`Error al actualizar la lista de prospectos: ${err.message || 'Error desconocido'}`);
-                            setLoading(false);
-                        });
-                } catch (err) {
-                    console.error('Error general al recargar prospectos:', err);
-                    setError(`Error al actualizar la lista de prospectos: ${err.message || 'Error desconocido'}`);
-                    setLoading(false);
-                }
+                fetchProspectos();
             }}
         />
         
@@ -320,33 +274,7 @@ const ProspectosPage = () => {
             onProspectoUpdated={(prospectoActualizado) => {
                 // Recargar prospectos después de actualizar uno
                 console.log('Prospecto actualizado, recargando lista...');
-                setLoading(true);
-                
-                try {
-                    supabase
-                        .from('prospectos')
-                        .select('*')
-                        .then(({ data, error }) => {
-                            if (error) {
-                                console.error('Error al recargar prospectos después de actualizar:', error);
-                                setError(`Error al actualizar la lista de prospectos: ${error.message || 'Error desconocido'}`);
-                            } else {
-                                console.log('Prospectos recargados después de actualizar:', data?.length || 0);
-                                setProspectos(data || []);
-                                setError(null);
-                            }
-                            setLoading(false);
-                        })
-                        .catch(err => {
-                            console.error('Error en la promesa al recargar prospectos después de actualizar:', err);
-                            setError(`Error al actualizar la lista de prospectos: ${err.message || 'Error desconocido'}`);
-                            setLoading(false);
-                        });
-                } catch (err) {
-                    console.error('Error general al recargar prospectos después de actualizar:', err);
-                    setError(`Error al actualizar la lista de prospectos: ${err.message || 'Error desconocido'}`);
-                    setLoading(false);
-                }
+                fetchProspectos();
             }}
         />
         </>
