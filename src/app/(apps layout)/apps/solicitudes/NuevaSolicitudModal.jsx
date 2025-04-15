@@ -1,13 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form, Row, Col, Spinner } from 'react-bootstrap';
-import { createClient } from '@supabase/supabase-js';
-
-// Crear cliente de Supabase
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+import { supabase } from '@/utils/supabase';
 
 const NuevaSolicitudModal = ({ show, onHide, onSolicitudCreated }) => {
     const [formData, setFormData] = useState({

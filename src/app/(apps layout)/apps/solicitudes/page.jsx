@@ -8,12 +8,7 @@ import VerSolicitudModal from './VerSolicitudModal';
 import EditarSolicitudModal from './EditarSolicitudModal';
 import SubirDocumentosModal from './SubirDocumentosModal';
 import DesembolsoModal from './DesembolsoModal';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-    'https://ljkqmizvyhlsfiqmpubr.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxqa3FtaXp2eWhsc2ZpcW1wdWJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2NTE4NzEsImV4cCI6MjA1OTIyNzg3MX0.P25CoZR3XGsXv0I3E_QMbFsTO-GmJoLsZfxblADhTRs'
-);
+import { supabase } from '@/utils/supabase';
 
 const SolicitudesPage = () => {
     const [searchTerm, setSearchTerm] = useState('');

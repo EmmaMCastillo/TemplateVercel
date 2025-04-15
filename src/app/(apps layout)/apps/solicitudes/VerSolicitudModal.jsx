@@ -3,13 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal, Button, Row, Col, Table, Spinner } from 'react-bootstrap';
 import { FileText, ExternalLink } from 'tabler-icons-react';
 import HkBadge from '@/components/@hk-badge/@hk-badge';
-import { createClient } from '@supabase/supabase-js';
-
-// Crear cliente de Supabase
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+import { supabase } from '@/utils/supabase';
 
 const VerSolicitudModal = ({ show, onHide, solicitud }) => {
     const [loading, setLoading] = useState(false);

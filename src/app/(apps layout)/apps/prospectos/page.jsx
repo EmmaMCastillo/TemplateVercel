@@ -6,13 +6,7 @@ import HkBadge from '@/components/@hk-badge/@hk-badge';
 import NuevoProspectoModal from './NuevoProspectoModal';
 import VerProspectoModal from './VerProspectoModal';
 import EditarProspectoModal from './EditarProspectoModal';
-import { createClient } from '@supabase/supabase-js';
-
-// Crear cliente de Supabase con valores directos
-const supabase = createClient(
-    'https://ljkqmizvyhlsfiqmpubr.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxqa3FtaXp2eWhsc2ZpcW1wdWJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2NTE4NzEsImV4cCI6MjA1OTIyNzg3MX0.P25CoZR3XGsXv0I3E_QMbFsTO-GmJoLsZfxblADhTRs'
-);
+import { supabase } from '@/utils/supabase';
 
 const ProspectosPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
