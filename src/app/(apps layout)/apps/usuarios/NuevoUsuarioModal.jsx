@@ -38,6 +38,7 @@ const NuevoUsuarioModal = ({ show, onHide, onUsuarioCreated }) => {
         nombre: '',
         email: '',
         password: '',
+        telefono: '', // Añadido campo de teléfono
         rol: 'usuario'
     });
     const [loading, setLoading] = useState(false);
@@ -83,6 +84,30 @@ const NuevoUsuarioModal = ({ show, onHide, onUsuarioCreated }) => {
             return { success: true, result };
         } catch (error) {
             console.error('Error al enviar correo de bienvenida:', error);
+            return { success: false, error };
+        }
+    };
+
+    // Función para enviar notificación de WhatsApp (separada para no bloquear la creación de usuario)
+    const sendWhatsappNotification = async (phoneNumber, nombre) => {
+        try {
+            console.log('Enviando notificación de WhatsApp a:', phoneNumber);
+            const response = await fetch('/api/auth/send-whatsapp-notification', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    phoneNumber,
+                    nombre
+                }),
+            });
+            
+            const result = await response.json();
+            console.log('Resultado del envío de WhatsApp:', result);
+            return { success: true, result };
+        } catch (error) {
+            console.error('Error al enviar notificación de WhatsApp:', error);
             return { success: false, error };
         }
     };
@@ -156,6 +181,7 @@ const NuevoUsuarioModal = ({ show, onHide, onUsuarioCreated }) => {
                 nombre: '',
                 email: '',
                 password: '',
+                telefono: '',
                 rol: 'usuario'
             });
             
@@ -182,6 +208,19 @@ const NuevoUsuarioModal = ({ show, onHide, onUsuarioCreated }) => {
                         console.error('Error al enviar correo de bienvenida:', emailError);
                     });
             }
+            
+            // Enviar notificación de WhatsApp en segundo plano (si se proporcionó un número de teléfono)
+            if (formData.telefono.trim()) {
+                sendWhatsappNotification(formData.telefono, formData.nombre)
+                    .then(whatsappResult => {
+                        if (!whatsappResult.success) {
+                            console.warn('No se pudo enviar la notificación de WhatsApp, pero el usuario fue creado correctamente');
+                        }
+                    })
+                    .catch(whatsappError => {
+                        console.error('Error al enviar notificación de WhatsApp:', whatsappError);
+                    });
+            }
         } catch (err) {
             console.error('Error al crear el usuario:', err);
             setError(err.message || 'Error al crear el usuario. Por favor, intente de nuevo.');
@@ -205,7 +244,7 @@ const NuevoUsuarioModal = ({ show, onHide, onUsuarioCreated }) => {
                     
                     {success && (
                         <Alert variant="success" className="mb-3">
-                            Usuario creado exitosamente. Se ha enviado un correo de bienvenida.
+                            Usuario creado exitosamente. Se ha enviado un correo de bienvenida y una notificación por WhatsApp (si se proporcionó un número).
                         </Alert>
                     )}
                     
@@ -233,6 +272,20 @@ const NuevoUsuarioModal = ({ show, onHide, onUsuarioCreated }) => {
                                 required
                                 disabled={loading}
                             />
+                        </Col>
+                        <Col sm={12} className="form-group mb-3">
+                            <Form.Label>Teléfono (WhatsApp)</Form.Label>
+                            <Form.Control
+                                type="tel"
+                                name="telefono"
+                                value={formData.telefono}
+                                onChange={handleChange}
+                                placeholder="Ej: +573153041548"
+                                disabled={loading}
+                            />
+                            <Form.Text className="text-muted">
+                                Incluya el código de país con el formato internacional (ej: +573153041548)
+                            </Form.Text>
                         </Col>
                         <Col sm={12} className="form-group mb-3">
                             <Form.Label>Contraseña (opcional)</Form.Label>
