@@ -3,31 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button, Modal, Form, Spinner, Alert } from 'react-bootstrap';
 import { X } from 'tabler-icons-react';
 import './PermisosStyles.css';
-import { createClient } from '@supabase/supabase-js';
-
-// URL y claves de Supabase
-const supabaseUrl = 'https://ljkqmizvyhlsfiqmpubr.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxqa3FtaXp2eWhsc2ZpcW1wdWJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2NTE4NzEsImV4cCI6MjA1OTIyNzg3MX0.P25CoZR3XGsXv0I3E_QMbFsTO-GmJoLsZfxblADhTRs';
-const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxqa3FtaXp2eWhsc2ZpcW1wdWJyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MzY1MTg3MSwiZXhwIjoyMDU5MjI3ODcxfQ.DpOblFmGSBjQzsyiH9QvESlnsavFi3F29YUZOOnrEu8';
-
-// Crear cliente de Supabase
-const supabase = createClient(
-    supabaseUrl,
-    supabaseAnonKey
-);
-
-// Cliente de Supabase con clave de servicio para operaciones administrativas
-// Nota: En producción, esto debería manejarse solo en el servidor
-const supabaseAdmin = createClient(
-    supabaseUrl,
-    supabaseServiceKey,
-    {
-        auth: {
-            autoRefreshToken: false,
-            persistSession: false
-        }
-    }
-);
+import { supabase, supabaseAdmin } from '@/utils/supabase';
 
 // Definición de todos los módulos y sus acciones
 const modulesDefinition = {

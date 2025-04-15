@@ -2,25 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form, Row, Col, Card, Spinner, Alert } from 'react-bootstrap';
 import { Upload, Check, X } from 'tabler-icons-react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase, supabaseAdmin } from '@/utils/supabase';
 
-// Crear cliente de Supabase con la clave de service role para tener acceso completo al storage
-const supabase = createClient(
-    'https://ljkqmizvyhlsfiqmpubr.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxqa3FtaXp2eWhsc2ZpcW1wdWJyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0MzY1MTg3MSwiZXhwIjoyMDU5MjI3ODcxfQ.DpOblFmGSBjQzsyiH9QvESlnsavFi3F29YUZOOnrEu8',
-    {
-        auth: {
-            autoRefreshToken: false,
-            persistSession: false
-        }
-    }
-);
-
-// También crear un cliente con la clave anónima para probar
-const supabaseAnon = createClient(
-    'https://ljkqmizvyhlsfiqmpubr.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxqa3FtaXp2eWhsc2ZpcW1wdWJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2NTE4NzEsImV4cCI6MjA1OTIyNzg3MX0.P25CoZR3XGsXv0I3E_QMbFsTO-GmJoLsZfxblADhTRs'
-);
+// Usar supabaseAdmin para operaciones que requieren permisos elevados
+// y supabase para operaciones regulares
 // Nombre del bucket en Supabase Storage
 // Probar con diferentes buckets para ver cuál funciona
 const BUCKET_NAME = 'documentos-solicitudes'; // Bucket existente que vimos en las pruebas
@@ -91,7 +76,7 @@ const SubirDocumentosModal = ({ show, onHide, solicitud }) => {
             console.log('Verificando buckets disponibles...');
             
             // Listar todos los buckets disponibles
-            const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+            const { data: buckets, error: bucketsError } = await supabaseAdmin.storage.listBuckets();
             
             if (bucketsError) {
                 console.error('Error al listar buckets con service role:', bucketsError);
@@ -111,14 +96,14 @@ const SubirDocumentosModal = ({ show, onHide, solicitud }) => {
             if (mainBucketExists) {
                 try {
                     // Intentar configurar políticas de RLS para el bucket principal
-                    await supabase.rpc('create_storage_policy', {
+                    await supabaseAdmin.rpc('create_storage_policy', {
                         bucket_id: BUCKET_NAME,
                         name: 'allow_public_read',
                         definition: 'true',
                         operation: 'SELECT'
                     });
                     
-                    await supabase.rpc('create_storage_policy', {
+                    await supabaseAdmin.rpc('create_storage_policy', {
                         bucket_id: BUCKET_NAME,
                         name: 'allow_public_insert',
                         definition: 'true',
@@ -134,14 +119,14 @@ const SubirDocumentosModal = ({ show, onHide, solicitud }) => {
             if (backupBucketExists) {
                 try {
                     // Intentar configurar políticas de RLS para el bucket alternativo
-                    await supabase.rpc('create_storage_policy', {
+                    await supabaseAdmin.rpc('create_storage_policy', {
                         bucket_id: BACKUP_BUCKET_NAME,
                         name: 'allow_public_read',
                         definition: 'true',
                         operation: 'SELECT'
                     });
                     
-                    await supabase.rpc('create_storage_policy', {
+                    await supabaseAdmin.rpc('create_storage_policy', {
                         bucket_id: BACKUP_BUCKET_NAME,
                         name: 'allow_public_insert',
                         definition: 'true',
@@ -158,7 +143,7 @@ const SubirDocumentosModal = ({ show, onHide, solicitud }) => {
             if (!mainBucketExists && !backupBucketExists) {
                 console.log('Intentando crear bucket...');
                 try {
-                    const { error: createError } = await supabase.storage.createBucket(BACKUP_BUCKET_NAME, {
+                    const { error: createError } = await supabaseAdmin.storage.createBucket(BACKUP_BUCKET_NAME, {
                         public: true, // Intentar con acceso público
                         fileSizeLimit: 10485760, // 10MB
                     });
@@ -221,7 +206,7 @@ const SubirDocumentosModal = ({ show, onHide, solicitud }) => {
             let data, error;
             
             try {
-                const result = await supabase.storage
+                const result = await supabaseAdmin.storage
                     .from(BUCKET_NAME)
                     .upload(filePath, file, {
                         contentType: 'application/pdf', // Especificar explícitamente el tipo de contenido
@@ -237,7 +222,7 @@ const SubirDocumentosModal = ({ show, onHide, solicitud }) => {
                     
                     // Si falla, intentar con el bucket alternativo
                     console.log(`Intentando subir a bucket alternativo ${BACKUP_BUCKET_NAME}...`);
-                    const backupResult = await supabase.storage
+                    const backupResult = await supabaseAdmin.storage
                         .from(BACKUP_BUCKET_NAME)
                         .upload(filePath, file, {
                             contentType: 'application/pdf',
@@ -250,7 +235,7 @@ const SubirDocumentosModal = ({ show, onHide, solicitud }) => {
                         
                         // Como último recurso, intentar con la clave anónima
                         console.log('Intentando subir con clave anónima...');
-                        const anonResult = await supabaseAnon.storage
+                        const anonResult = await supabase.storage
                             .from(BUCKET_NAME)
                             .upload(filePath, file, {
                                 contentType: 'application/pdf',
@@ -287,7 +272,7 @@ const SubirDocumentosModal = ({ show, onHide, solicitud }) => {
             console.log('Archivo subido exitosamente:', data);
 
             // Obtener la URL pública del archivo
-            const { data: urlData, error: urlError } = await supabase.storage
+            const { data: urlData, error: urlError } = await supabaseAdmin.storage
                 .from(BUCKET_NAME)
                 .createSignedUrl(filePath, 31536000, { // URL válida por 1 año
                     download: true, // Permitir descarga del archivo
