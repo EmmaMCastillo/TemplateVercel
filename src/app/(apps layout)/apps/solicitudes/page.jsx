@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button, Card, Col, Container, Form, InputGroup, Row, Table } from 'react-bootstrap';
 import { Eye, FileText, Filter, Pencil, Plus, Search, Upload, CurrencyDollar } from 'tabler-icons-react';
 import HkBadge from '@/components/@hk-badge/@hk-badge';
@@ -9,6 +9,7 @@ import EditarSolicitudModal from './EditarSolicitudModal';
 import SubirDocumentosModal from './SubirDocumentosModal';
 import DesembolsoModal from './DesembolsoModal';
 import { supabase } from '@/utils/supabase';
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 
 const SolicitudesPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -18,41 +19,17 @@ const SolicitudesPage = () => {
     const [showSubirDocumentosModal, setShowSubirDocumentosModal] = useState(false);
     const [showDesembolsoModal, setShowDesembolsoModal] = useState(false);
     const [selectedSolicitud, setSelectedSolicitud] = useState(null);
-    const [solicitudes, setSolicitudes] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
-    // Cargar solicitudes al iniciar
-    useEffect(() => {
-        const fetchSolicitudes = async () => {
-            try {
-                setLoading(true);
-                const { data, error } = await supabase
-                    .from('solicitudes')
-                    .select(`
-                        *,
-                        prospectos:prospecto_id(*),
-                        bancos:banco_id(*)
-                    `);
-                
-                if (error) {
-                    console.error('Error al cargar solicitudes:', error);
-                    setError(`Error al cargar solicitudes: ${error.message || 'Error desconocido'}`);
-                } else {
-                    console.log('Solicitudes cargadas:', data?.length || 0);
-                    setSolicitudes(data || []);
-                    setError(null);
-                }
-            } catch (err) {
-                console.error('Error general al cargar solicitudes:', err);
-                setError(`Error al cargar solicitudes: ${err.message || 'Error desconocido'}`);
-            } finally {
-                setLoading(false);
-            }
-        };
-        
-        fetchSolicitudes();
-    }, []);
+    
+    // Usar el hook personalizado para cargar solicitudes
+    const { data: solicitudes, loading, error, refetch: fetchSolicitudes } = useSupabaseQuery('solicitudes', {
+        select: `
+            *,
+            prospectos:prospecto_id(*),
+            bancos:banco_id(*)
+        `,
+        timeout: 8000,
+        retries: 2
+    });
 
     // Función para filtrar solicitudes según el término de búsqueda
     const filteredSolicitudes = solicitudes.filter(solicitud => {
@@ -173,6 +150,11 @@ const SolicitudesPage = () => {
                         <div>
                             {loading && <span className="text-muted">Cargando solicitudes...</span>}
                             {error && <span className="text-danger">{error}</span>}
+                            {!loading && !error && (
+                                <Button variant="outline-primary" onClick={fetchSolicitudes}>
+                                    Refrescar
+                                </Button>
+                            )}
                         </div>
                         <div className="d-flex gap-2">
                             <Button variant="outline-secondary">
@@ -368,37 +350,7 @@ const SolicitudesPage = () => {
             onSolicitudCreated={() => {
                 // Recargar solicitudes después de crear una nueva
                 console.log('Solicitud creada, recargando lista...');
-                setLoading(true);
-                
-                try {
-                    supabase
-                        .from('solicitudes')
-                        .select(`
-                            *,
-                            prospectos:prospecto_id(*),
-                            bancos:banco_id(*)
-                        `)
-                        .then(({ data, error }) => {
-                            if (error) {
-                                console.error('Error al recargar solicitudes después de crear:', error);
-                                setError(`Error al actualizar la lista de solicitudes: ${error.message || 'Error desconocido'}`);
-                            } else {
-                                console.log('Solicitudes recargadas después de crear:', data?.length || 0);
-                                setSolicitudes(data || []);
-                                setError(null);
-                            }
-                            setLoading(false);
-                        })
-                        .catch(err => {
-                            console.error('Error en la promesa al recargar solicitudes después de crear:', err);
-                            setError(`Error al actualizar la lista de solicitudes: ${err.message || 'Error desconocido'}`);
-                            setLoading(false);
-                        });
-                } catch (err) {
-                    console.error('Error general al recargar solicitudes después de crear:', err);
-                    setError(`Error al actualizar la lista de solicitudes: ${err.message || 'Error desconocido'}`);
-                    setLoading(false);
-                }
+                fetchSolicitudes();
             }}
         />
         
@@ -415,37 +367,7 @@ const SolicitudesPage = () => {
             onSolicitudUpdated={() => {
                 // Recargar solicitudes después de actualizar una
                 console.log('Solicitud actualizada, recargando lista...');
-                setLoading(true);
-                
-                try {
-                    supabase
-                        .from('solicitudes')
-                        .select(`
-                            *,
-                            prospectos:prospecto_id(*),
-                            bancos:banco_id(*)
-                        `)
-                        .then(({ data, error }) => {
-                            if (error) {
-                                console.error('Error al recargar solicitudes después de actualizar:', error);
-                                setError(`Error al actualizar la lista de solicitudes: ${error.message || 'Error desconocido'}`);
-                            } else {
-                                console.log('Solicitudes recargadas después de actualizar:', data?.length || 0);
-                                setSolicitudes(data || []);
-                                setError(null);
-                            }
-                            setLoading(false);
-                        })
-                        .catch(err => {
-                            console.error('Error en la promesa al recargar solicitudes después de actualizar:', err);
-                            setError(`Error al actualizar la lista de solicitudes: ${err.message || 'Error desconocido'}`);
-                            setLoading(false);
-                        });
-                } catch (err) {
-                    console.error('Error general al recargar solicitudes después de actualizar:', err);
-                    setError(`Error al actualizar la lista de solicitudes: ${err.message || 'Error desconocido'}`);
-                    setLoading(false);
-                }
+                fetchSolicitudes();
             }}
         />
 
@@ -456,37 +378,7 @@ const SolicitudesPage = () => {
             onDocumentosSubidos={() => {
                 // Recargar solicitudes después de subir documentos
                 console.log('Documentos subidos, recargando lista...');
-                setLoading(true);
-                
-                try {
-                    supabase
-                        .from('solicitudes')
-                        .select(`
-                            *,
-                            prospectos:prospecto_id(*),
-                            bancos:banco_id(*)
-                        `)
-                        .then(({ data, error }) => {
-                            if (error) {
-                                console.error('Error al recargar solicitudes después de subir documentos:', error);
-                                setError(`Error al actualizar la lista de solicitudes: ${error.message || 'Error desconocido'}`);
-                            } else {
-                                console.log('Solicitudes recargadas después de subir documentos:', data?.length || 0);
-                                setSolicitudes(data || []);
-                                setError(null);
-                            }
-                            setLoading(false);
-                        })
-                        .catch(err => {
-                            console.error('Error en la promesa al recargar solicitudes después de subir documentos:', err);
-                            setError(`Error al actualizar la lista de solicitudes: ${err.message || 'Error desconocido'}`);
-                            setLoading(false);
-                        });
-                } catch (err) {
-                    console.error('Error general al recargar solicitudes después de subir documentos:', err);
-                    setError(`Error al actualizar la lista de solicitudes: ${err.message || 'Error desconocido'}`);
-                    setLoading(false);
-                }
+                fetchSolicitudes();
             }}
         />
 
@@ -497,37 +389,7 @@ const SolicitudesPage = () => {
             onDesembolsoRegistrado={() => {
                 // Recargar solicitudes después de registrar desembolso
                 console.log('Desembolso registrado, recargando lista...');
-                setLoading(true);
-                
-                try {
-                    supabase
-                        .from('solicitudes')
-                        .select(`
-                            *,
-                            prospectos:prospecto_id(*),
-                            bancos:banco_id(*)
-                        `)
-                        .then(({ data, error }) => {
-                            if (error) {
-                                console.error('Error al recargar solicitudes después de registrar desembolso:', error);
-                                setError(`Error al actualizar la lista de solicitudes: ${error.message || 'Error desconocido'}`);
-                            } else {
-                                console.log('Solicitudes recargadas después de registrar desembolso:', data?.length || 0);
-                                setSolicitudes(data || []);
-                                setError(null);
-                            }
-                            setLoading(false);
-                        })
-                        .catch(err => {
-                            console.error('Error en la promesa al recargar solicitudes después de registrar desembolso:', err);
-                            setError(`Error al actualizar la lista de solicitudes: ${err.message || 'Error desconocido'}`);
-                            setLoading(false);
-                        });
-                } catch (err) {
-                    console.error('Error general al recargar solicitudes después de registrar desembolso:', err);
-                    setError(`Error al actualizar la lista de solicitudes: ${err.message || 'Error desconocido'}`);
-                    setLoading(false);
-                }
+                fetchSolicitudes();
             }}
         />
         </>
