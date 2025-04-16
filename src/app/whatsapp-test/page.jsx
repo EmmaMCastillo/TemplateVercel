@@ -155,7 +155,7 @@ export default function WhatsAppTestPage() {
               
               <h5>URL del Webhook:</h5>
               <code className="d-block bg-light p-2 mb-3">
-                https://tu-dominio.com/api/webhooks/whatsapp
+                {process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/whatsapp
               </code>
               
               <h5>Token de Verificación:</h5>
