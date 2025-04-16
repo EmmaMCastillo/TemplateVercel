@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import SimpleBar from 'simplebar-react';
@@ -7,7 +7,7 @@ import * as Icons from 'react-feather';
 import { Dropdown, Form, ListGroup } from 'react-bootstrap';
 import { useWindowWidth } from '@react-hook/window-size';
 import { useGlobalStateContext } from '@/context/GolobalStateProvider';
-import contacts from '@/data/chat/contact-list';
+import { supabase } from '@/utils/supabase';
 
 //Images
 import avatar1 from '@/assets/img/avatar1.jpg';
@@ -16,36 +16,107 @@ import avatar15 from '@/assets/img/avatar15.jpg';
 
 
 const ContactList = ({ invitePeople }) => {
-
     const { states, dispatch } = useGlobalStateContext();
-    const [list, setList] = useState(contacts)
+    const [list, setList] = useState([]);
     const [searchValue, setSearchValue] = useState("");
+    const [loading, setLoading] = useState(true);
     const width = useWindowWidth();
 
-    const Conversation = (index, id) => {
-        (list[index].avatar) ? dispatch({ type: "set_user", userId: list[index].id, avatar: list[index].avatar, userName: list[index].name, status: list[index].status }) : dispatch({ type: "set_user", userId: list[index].id, avatar: list[index].initAvatar, userName: list[index].name, status: list[index].status })
+    // Cargar contactos de WhatsApp desde la base de datos
+    useEffect(() => {
+        const fetchWhatsAppContacts = async () => {
+            try {
+                setLoading(true);
+                
+                // Obtener mensajes únicos agrupados por número de teléfono
+                const { data, error } = await supabase
+                    .from('whatsapp_messages')
+                    .select('from_number, sender_name, created_at')
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                
+                // Procesar los datos para crear una lista de contactos única
+                const uniqueContacts = {};
+                
+                data.forEach(msg => {
+                    // Solo procesar mensajes recibidos (no los enviados por nosotros)
+                    if (!uniqueContacts[msg.from_number]) {
+                        uniqueContacts[msg.from_number] = {
+                            id: msg.from_number,
+                            name: msg.sender_name || `WhatsApp (${msg.from_number})`,
+                            initAvatar: { 
+                                type: 'init', 
+                                title: (msg.sender_name || 'W').charAt(0), 
+                                variant: 'success' 
+                            },
+                            time: new Date(msg.created_at).toLocaleTimeString('en-US', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            }),
+                            lastChat: "WhatsApp Contact",
+                            status: "WhatsApp",
+                            unread: 0
+                        };
+                    }
+                });
+                
+                // Convertir el objeto a un array
+                const contactsList = Object.values(uniqueContacts);
+                
+                setList(contactsList);
+            } catch (err) {
+                console.error('Error al cargar contactos de WhatsApp:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        fetchWhatsAppContacts();
+    }, []);
 
-        const updatedContacts = contacts.map((contactList) =>
+    const Conversation = (index, id) => {
+        (list[index].avatar) 
+            ? dispatch({ 
+                type: "set_user", 
+                userId: list[index].id, 
+                avatar: list[index].avatar, 
+                userName: list[index].name, 
+                status: list[index].status 
+              }) 
+            : dispatch({ 
+                type: "set_user", 
+                userId: list[index].id, 
+                avatar: list[index].initAvatar, 
+                userName: list[index].name, 
+                status: list[index].status 
+              });
+
+        const updatedContacts = list.map((contactList) =>
             contactList.id === id ? { ...contactList, unread: 0 } : contactList
         );
         setList(updatedContacts);
 
         if (width <= 991) {
-            dispatch({ type: "start_chat" })
-            dispatch({ type: "top_nav_toggle" })
+            dispatch({ type: "start_chat" });
+            dispatch({ type: "top_nav_toggle" });
         }
-
     }
 
     const searchOnChange = (event) => {
         setSearchValue(event.target.value);
-        // Create copy of item list
-        var updatedList = [...contacts];
-        // Include all elements which includes the search query
-        updatedList = updatedList.filter((item) => searchValue.length > 1 ? item.name.toString().toLowerCase().includes(searchValue.toLocaleLowerCase()) : item
+        
+        if (searchValue.length <= 1) {
+            // Si se borra la búsqueda, mostrar todos los contactos
+            return;
+        }
+        
+        // Filtrar la lista actual
+        const filteredList = list.filter(item => 
+            item.name.toString().toLowerCase().includes(searchValue.toLowerCase())
         );
-        // Trigger render with updated values
-        setList(updatedList);
+        
+        setList(filteredList);
     }
 
     return (
@@ -143,61 +214,28 @@ const ContactList = ({ invitePeople }) => {
                         <Form.Control type="text" placeholder="Search Chats" value={searchValue} onChange={searchOnChange} />
                     </Form>
                     <div className="frequent-contact">
-                        <div className="title-sm text-primary"><span>Frequent contact</span></div>
+                        <div className="title-sm text-primary"><span>WhatsApp Contacts</span></div>
                         <ul className="hk-list">
                             <li>
-                                <div className="avatar avatar-sm avatar-primary position-relative avatar-rounded">
-                                    <span className="initial-wrap">H</span>
-                                    <div className="badge-icon badge-circle badge-icon-xxs text-white position-bottom-end-overflow-1">
-                                        <div className="badge-icon-wrap">
-                                            <i className="ri-group-fill text-light" />
-                                        </div>
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 127 127">
-                                            <g data-name="Ellipse 302" transform="translate(8 8)" strokeWidth={3}>
-                                                <circle cx="55.5" cy="55.5" r="55.5" stroke="currentColor" />
-                                                <circle cx="55.5" cy="55.5" r="59.5" fill="currentColor" />
-                                            </g>
-                                        </svg>
-                                    </div>
-                                </div>
-                            </li>
-                            <li>
-                                <div className="avatar avatar-sm avatar-primary position-relative avatar-rounded">
-                                    <Image src={avatar1} alt="user" className="avatar-img" />
-                                    <div className="badge-icon badge-circle badge-icon-xxs text-white position-bottom-end-overflow-1">
-                                        <div className="badge-icon-wrap">
-                                            <i className="ri-group-fill text-light" />
-                                        </div>
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 127 127">
-                                            <g data-name="Ellipse 302" transform="translate(8 8)" strokeWidth={3}>
-                                                <circle cx="55.5" cy="55.5" r="55.5" stroke="currentColor" />
-                                                <circle cx="55.5" cy="55.5" r="59.5" fill="currentColor" />
-                                            </g>
-                                        </svg>
-                                    </div>
-                                </div>
-                            </li>
-                            <li>
-                                <div className="avatar avatar-sm avatar-soft-danger avatar-rounded position-relative">
+                                <div className="avatar avatar-sm avatar-soft-success avatar-rounded position-relative">
                                     <span className="initial-wrap">W</span>
                                     <span className="badge badge-success badge-indicator badge-indicator-lg position-bottom-end-overflow-1" />
-                                </div>
-                            </li>
-                            <li>
-                                <div className="avatar avatar-sm avatar-rounded position-relative">
-                                    <Image src={avatar8} alt="user" className="avatar-img" />
-                                    <span className="badge badge-success badge-indicator badge-indicator-lg position-bottom-end-overflow-1" />
-                                </div>
-                            </li>
-                            <li>
-                                <div className="avatar avatar-sm avatar-rounded">
-                                    <Image src={avatar15} alt="user" className="avatar-img" />
                                 </div>
                             </li>
                         </ul>
                     </div>
                     <ListGroup variant="flush" className="chat-contacts-list">
-                        {
+                        {loading ? (
+                            <div className="d-flex justify-content-center my-5">
+                                <div className="spinner-border text-primary" role="status">
+                                    <span className="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        ) : list.length === 0 ? (
+                            <div className="text-center my-5 text-muted">
+                                No WhatsApp contacts found
+                            </div>
+                        ) : (
                             list.map((elem, index) => (
                                 <ListGroup.Item onClick={() => Conversation(index, elem.id)} key={index} >
                                     <div className={classNames("media", { "active-user": elem.id === states.chatState.userId }, { "read-chat": !elem.unread })}>
@@ -232,7 +270,7 @@ const ContactList = ({ invitePeople }) => {
                                     </div>
                                 </ListGroup.Item>
                             ))
-                        }
+                        )}
                     </ListGroup>
                 </SimpleBar>
             </div>
