@@ -11,6 +11,11 @@ export const SidebarMenu = [
                 path: '/dashboard'
             },
             {
+                name: 'Chat',
+                icon: <Icons.MessageCircle size={18} />,
+                path: '/apps/chat'
+            },
+            {
                 name: 'Prospectos',
                 icon: <Icons.Users size={18} />,
                 path: '/apps/prospectos'
