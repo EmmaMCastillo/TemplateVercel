@@ -33,7 +33,7 @@ export async function sendWhatsAppMessage({
       template: {
         name: "hello_world",
         language: {
-          code: "es"
+          code: "en_US"
         }
       }
     };
