@@ -114,10 +114,10 @@ src/
 │   ├── useSupabaseAdminQuery.js   # Hook para consultas administrativas
 │   └── use[Funcionalidad].js      # Otros hooks personalizados
 │
-├── services/                      # PROPUESTA: Integraciones externas (a crear)
-│   ├── whatsapp/                  # Servicios para WhatsApp API
-│   │   ├── sendMessage.js
-│   │   └── templates.js
+├── services/                      # Integraciones con APIs externas
+│   ├── whatsapp/                  # Servicios para WhatsApp Cloud API
+│   │   ├── sendMessage.js         # Servicio para enviar mensajes
+│   │   └── receiveMessage.js      # Servicio para procesar mensajes entrantes
 │   │
 │   └── [otroServicio]/            # Otros servicios externos
 │
@@ -224,17 +224,46 @@ useEffect(() => {
 
 ### 📦 3. Las llamadas a APIs externas deben estar encapsuladas en servicios dedicados
 
-- **PROPUESTA DE MEJORA**: Crear una carpeta `src/services/` para organizar todas las integraciones externas
+- Usar la carpeta `src/services/` para organizar todas las integraciones externas
 - Organizar por servicio: `services/whatsapp/`, `services/email/`
 - Cada función debe recibir parámetros estructurados
 - Manejar headers, errores y logs de manera consistente
 - Implementar reintentos y timeouts cuando sea apropiado
 
 ```javascript
-// ✅ CORRECTO (Estructura propuesta)
+// ✅ CORRECTO
 // src/services/whatsapp/sendMessage.js
-export async function sendWhatsAppMessage({ to, templateName, parameters }) {
-  // Implementación con manejo de errores, timeouts y reintentos
+export async function sendWhatsAppMessage({
+  to,
+  message,
+  token = process.env.NEXT_PUBLIC_WHATSAPP_TOKEN,
+  phoneNumberId = process.env.NEXT_PUBLIC_PHONE_NUMBER_ID
+}) {
+  try {
+    // Formatear el número de teléfono
+    const formattedPhoneNumber = to.startsWith('+') ? to.substring(1) : to;
+    
+    // Construir la URL de la API
+    const apiUrl = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
+    
+    // Construir el cuerpo de la solicitud
+    const requestBody = {
+      messaging_product: "whatsapp",
+      to: formattedPhoneNumber,
+      type: "template",
+      template: {
+        name: "hello_world",
+        language: {
+          code: "es"
+        }
+      }
+    };
+    
+    // Realizar la solicitud a la API con manejo de errores
+    // ...
+  } catch (error) {
+    // Manejo de errores
+  }
 }
 
 // En el componente o hook que lo utiliza:
@@ -242,8 +271,7 @@ import { sendWhatsAppMessage } from '@/services/whatsapp/sendMessage';
 
 await sendWhatsAppMessage({
   to: '+1234567890',
-  templateName: 'appointment_reminder',
-  parameters: { name: 'Juan', date: '2023-05-15' }
+  message: 'Hola, este es un mensaje de prueba'
 });
 
 // ❌ INCORRECTO: Llamadas a APIs directamente en componentes o hooks
@@ -256,7 +284,7 @@ const sendMessage = async () => {
 };
 ```
 
-> **Nota**: Actualmente, el proyecto no tiene una carpeta `services` dedicada. Se recomienda crear esta estructura para mejorar la organización y mantenibilidad del código.
+> **Nota**: El proyecto ahora implementa la carpeta `services` para la integración con WhatsApp Cloud API, siguiendo las buenas prácticas recomendadas.
 
 ### 🧩 4. Componentes deben ser pequeños y separados por responsabilidad
 
@@ -460,91 +488,148 @@ export function useSupabaseQuery(table, options = {}) {
 }
 ```
 
-### Ejemplo 2: Servicio para enviar mensajes de WhatsApp (Propuesta de Implementación)
+### Ejemplo 2: Integración con WhatsApp Cloud API
 
 ```javascript
-// PROPUESTA: src/services/whatsapp/sendMessage.js
-import { WHATSAPP_API_URL, WHATSAPP_TOKEN } from '@/utils/constants';
+// src/services/whatsapp/sendMessage.js
+import { supabase } from '@/utils/supabase';
 
 /**
- * Envía un mensaje de WhatsApp utilizando una plantilla
- * @param {Object} params - Parámetros para el envío
- * @param {string} params.to - Número de teléfono del destinatario (con código de país)
- * @param {string} params.templateName - Nombre de la plantilla aprobada
- * @param {Object} params.parameters - Parámetros para la plantilla
- * @param {number} [params.timeout=10000] - Tiempo máximo de espera en ms
- * @param {number} [params.retries=2] - Número de reintentos en caso de error
- * @returns {Promise<Object>} - Respuesta de la API
+ * Envía un mensaje de texto a través de WhatsApp
+ * @param {Object} params - Parámetros para enviar el mensaje
+ * @param {string} params.to - Número de teléfono del destinatario (formato internacional)
+ * @param {string} params.message - Mensaje a enviar
+ * @param {string} [params.token] - Token de acceso (opcional, por defecto usa la variable de entorno)
+ * @param {string} [params.phoneNumberId] - ID del número de teléfono del remitente
+ * @returns {Promise<Object>} - Resultado de la operación
  */
 export async function sendWhatsAppMessage({
   to,
-  templateName,
-  parameters,
-  timeout = 10000,
-  retries = 2
+  message,
+  token = process.env.NEXT_PUBLIC_WHATSAPP_TOKEN,
+  phoneNumberId = process.env.NEXT_PUBLIC_PHONE_NUMBER_ID
 }) {
-  let attempt = 0;
-  
-  const sendAttempt = async () => {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
-      
-      const response = await fetch(`${WHATSAPP_API_URL}/messages`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${WHATSAPP_TOKEN}`
-        },
-        body: JSON.stringify({
-          messaging_product: 'whatsapp',
-          to,
-          type: 'template',
-          template: {
-            name: templateName,
-            language: { code: 'es' },
-            components: [
-              {
-                type: 'body',
-                parameters: Object.entries(parameters).map(([_, value]) => ({
-                  type: 'text',
-                  text: value
-                }))
-              }
-            ]
-          }
-        }),
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || 'Error al enviar mensaje');
+  try {
+    // Formatear el número de teléfono
+    const formattedPhoneNumber = to.startsWith('+') ? to.substring(1) : to;
+    
+    // Construir la URL de la API
+    const apiUrl = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
+    
+    // En modo sandbox, solo se pueden enviar mensajes usando plantillas predefinidas
+    const requestBody = {
+      messaging_product: "whatsapp",
+      to: formattedPhoneNumber,
+      type: "template",
+      template: {
+        name: "hello_world",
+        language: {
+          code: "es"
+        }
       }
-      
-      return await response.json();
-    } catch (error) {
-      if (error.name === 'AbortError') {
-        throw new Error('Timeout al enviar mensaje');
-      }
-      
-      if (attempt < retries) {
-        attempt++;
-        console.log(`Reintentando envío de WhatsApp (${attempt}/${retries})...`);
-        return await sendAttempt();
-      }
-      
-      throw error;
+    };
+    
+    // Realizar la solicitud a la API
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    });
+    
+    // Procesar la respuesta
+    const data = await response.json();
+    
+    // Verificar si la solicitud fue exitosa
+    if (!response.ok) {
+      throw new Error(`Error al enviar mensaje: ${data.error?.message || 'Error desconocido'}`);
     }
-  };
-  
-  return await sendAttempt();
+    
+    // Guardar el mensaje en la base de datos
+    await supabase.from('whatsapp_messages').insert({
+      message_id: data.messages[0].id,
+      to_number: formattedPhoneNumber,
+      from_number: process.env.NEXT_PUBLIC_PHONE_NUMBER_ID,
+      text: message,
+      timestamp: new Date().toISOString(),
+      status: 'sent',
+      type: 'template'
+    });
+    
+    return {
+      success: true,
+      data
+    };
+  } catch (error) {
+    console.error('Error en el servicio de WhatsApp:', error);
+    return {
+      success: false,
+      error: error.message || 'Error desconocido al enviar mensaje'
+    };
+  }
 }
 ```
 
-> **Nota**: Este es un ejemplo de cómo debería implementarse un servicio para WhatsApp siguiendo las buenas prácticas. Actualmente, el proyecto no tiene una carpeta `services` dedicada, por lo que se recomienda crear esta estructura.
+```javascript
+// src/hooks/useWhatsAppIntegration.js
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/utils/supabase';
+import { sendWhatsAppMessage } from '@/services/whatsapp/sendMessage';
+import { useGlobalStateContext } from '@/context/GolobalStateProvider';
+
+/**
+ * Hook para integrar WhatsApp con el chat existente
+ * @returns {Object} - Funciones y estado para la integración
+ */
+export function useWhatsAppIntegration() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const { states, dispatch } = useGlobalStateContext();
+  
+  // Suscribirse a nuevos mensajes de WhatsApp
+  useEffect(() => {
+    const subscription = supabase
+      .channel('whatsapp_messages')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'whatsapp_messages'
+      }, (payload) => {
+        // Procesar mensajes entrantes
+        // ...
+      })
+      .subscribe();
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [dispatch]);
+  
+  // Función para enviar un mensaje a través de WhatsApp
+  const sendMessageToWhatsApp = useCallback(async (text) => {
+    try {
+      // Implementación del envío de mensajes
+      // ...
+    } catch (err) {
+      setError(err.message);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [states.chatState.userId]);
+  
+  return {
+    loading,
+    error,
+    sendMessageToWhatsApp,
+    isWhatsAppContact: useCallback((userId) => /^\+?\d+$/.test(userId), [])
+  };
+}
+```
+
+> **Nota**: Esta implementación sigue las buenas prácticas recomendadas, encapsulando la lógica de integración con WhatsApp en servicios y hooks dedicados.
 
 ### Ejemplo 3: Componente de página con hooks personalizados
 
